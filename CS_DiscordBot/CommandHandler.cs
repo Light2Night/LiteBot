@@ -25,7 +25,18 @@ namespace Tea_and_Tea_Discord_Bot {
 			DoCommand(argumentsText);
 		}
 
-		protected abstract void DoCommand(string arguments);
+		protected virtual void DoCommand(string arguments) {
+			if (arguments == "") {
+				DefaultAction();
+			}
+			else {
+				throw new UnknownCommandException();
+			}
+		}
+
+		protected virtual void DefaultAction() {
+			throw new UnknownCommandException();
+		}
 
 		public bool IsCommand(string messageText) {
 			return messageText.StartsWith(commandIdentifier);
@@ -53,38 +64,21 @@ namespace Tea_and_Tea_Discord_Bot {
 			this.commandHandlers = commandHandlers;
 		}
 
-		protected override void DoCommand(string argumentsText) {
-			foreach (CommandHandler handler in commandHandlers) {
-				try {
-					handler.HandleCommand(argumentsText);
-					return;
-				}
-				catch (IsNotCommandException) { }
-			}
-			throw new UnknownCommandException();
-		}
-	}
-
-	public abstract class CommandHandlerWithCommandListAndDefault : CommandHandlerWithCommandList {
-		public CommandHandlerWithCommandListAndDefault(string commandIdentifier, SocketMessage message, List<CommandHandler> commandHandlers) : base(commandIdentifier, message, commandHandlers) { }
-
-		protected override void DoCommand(string argumentsText) {
-			if (argumentsText == "") {
+		protected override void DoCommand(string arguments) {
+			if (arguments == "") {
 				DefaultAction();
 				return;
 			}
 
 			foreach (CommandHandler handler in commandHandlers) {
 				try {
-					handler.HandleCommand(argumentsText);
+					handler.HandleCommand(arguments);
 					return;
 				}
 				catch (IsNotCommandException) { }
 			}
 			throw new UnknownCommandException();
 		}
-
-		protected abstract void DefaultAction();
 	}
 
 
@@ -105,71 +99,49 @@ namespace Tea_and_Tea_Discord_Bot {
 	public class BotHelpHandler : CommandHandler {
 		public BotHelpHandler(string commandIdentifier, SocketMessage message) : base(commandIdentifier, message) { }
 
-		protected override void DoCommand(string argumentsText) {
-			if (argumentsText == "") {
-				SendMessage(
-					message,
-					"Доступні команди:\n" +
-					"Час\n" +
-					"Автор\n" +
-					"Привіт"
-				);
-			}
-			else {
-				throw new UnknownCommandException();
-			}
+		protected override void DefaultAction() {
+			SendMessage(
+				message,
+				"Доступні команди:\n" +
+				"Час\n" +
+				"Автор\n" +
+				"Привіт"
+			);
 		}
 	}
 
 	public class TimeHandler : CommandHandler {
 		public TimeHandler(string commandIdentifier, SocketMessage message) : base(commandIdentifier, message) { }
 
-		protected override void DoCommand(string argumentsText) {
-			if (argumentsText == "") {
-				SendMessage(message, $"{DateTime.Now.ToLongTimeString()}\n{DateTime.Now.ToLongDateString()}");
-				if (DateTime.Now.Hour < 8)
-					SendMessage(message, "Іншими словами час спати");
-			}
-			else {
-				throw new UnknownCommandException();
-			}
+		protected override void DefaultAction() {
+			SendMessage(message, $"{DateTime.Now.ToLongTimeString()}\n{DateTime.Now.ToLongDateString()}");
+			if (DateTime.Now.Hour < 8)
+				SendMessage(message, "Іншими словами час спати");
 		}
 	}
 
 	public class AuthorHandler : CommandHandler {
 		public AuthorHandler(string commandIdentifier, SocketMessage message) : base(commandIdentifier, message) { }
 
-		protected override void DoCommand(string argumentsText) {
-			if (argumentsText == "") {
-				SendMessage(message, "<@!883836608963555339> Lite#5625");
-			}
-			else {
-				throw new UnknownCommandException();
-			}
+		protected override void DefaultAction() {
+			SendMessage(message, "<@!883836608963555339> Lite#5625");
 		}
 	}
 
 	public class HelloHandler : CommandHandler {
 		public HelloHandler(string commandIdentifier, SocketMessage message) : base(commandIdentifier, message) { }
 
-		protected override void DoCommand(string argumentsText) {
-			if (argumentsText == "") {
-				if (message.Author.Id == 883836608963555339) {
-					SendMessage(message, "Вітаю!");
-					return;
-				}
-				else {
-					SendMessage(message, "Ти хто такий?");
-					return;
-				}
+		protected override void DefaultAction() {
+			if (message.Author.Id == 883836608963555339) {
+				SendMessage(message, "Вітаю!");
 			}
 			else {
-				throw new UnknownCommandException();
+				SendMessage(message, "Ти хто такий?");
 			}
 		}
 	}
 
-	public class ArtHandler : CommandHandlerWithCommandListAndDefault {
+	public class ArtHandler : CommandHandlerWithCommandList {
 		public ArtHandler(string commandIdentifier, SocketMessage message)
 			: base(commandIdentifier, message,
 				new List<CommandHandler>() {
@@ -186,26 +158,21 @@ namespace Tea_and_Tea_Discord_Bot {
 	public class ArtHelpHandler : CommandHandler {
 		public ArtHelpHandler(string commandIdentifier, SocketMessage message) : base(commandIdentifier, message) { }
 
-		protected override void DoCommand(string argumentsText) {
-			if (argumentsText == "") {
-				SendMessage(
-					message,
-					"Доступні команди:\n" +
-					"Кількість \"число\""
-				);
-			}
-			else {
-				throw new UnknownCommandException();
-			}
+		protected override void DefaultAction() {
+			SendMessage(
+				message,
+				"Доступні команди:\n" +
+				"Кількість \"число\""
+			);
 		}
 	}
 
 	public class ArtWithCountHandler : CommandHandler {
 		public ArtWithCountHandler(string commandIdentifier, SocketMessage message) : base(commandIdentifier, message) { }
 
-		protected override void DoCommand(string argumentsText) {
-			if (IsUInt32(argumentsText)) {
-				uint numberOfPictures = Convert.ToUInt32(argumentsText);
+		protected override void DoCommand(string arguments) {
+			if (IsUInt32(arguments)) {
+				uint numberOfPictures = Convert.ToUInt32(arguments);
 				if (numberOfPictures > 10) {
 					SendMessage(message, "Занадто багато зображень");
 					return;
@@ -229,6 +196,8 @@ namespace Tea_and_Tea_Discord_Bot {
 			return false;
 		}
 	}
+
+
 
 	public class IsNotCommandException : Exception {
 		public IsNotCommandException() : this("Is not command cxception") { }
