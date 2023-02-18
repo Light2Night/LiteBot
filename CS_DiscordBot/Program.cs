@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using Discord;
 using Discord.WebSocket;
 using Newtonsoft.Json.Linq;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace Tea_and_Tea_Discord_Bot {
 	internal class Program {
@@ -74,8 +75,12 @@ namespace Tea_and_Tea_Discord_Bot {
 			PrintMessageInfo(message);
 
 			CommandHandler commandHandler = new BotCommandHandler("=", message);
-			if (commandHandler.IsCommand(message.Content, out string command)) {
-				commandHandler.HandleCommand(command);
+			try {
+				commandHandler.HandleCommand(message.Content);
+			}
+			catch (IsNotCommandException) { }
+			catch (UnknownCommandException) {
+				message.Channel.SendMessageAsync("Невідома команда");
 			}
 		}
 	}
