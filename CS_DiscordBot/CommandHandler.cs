@@ -3,7 +3,7 @@
 using ArtApp.Web;
 
 namespace Tea_and_Tea_Discord_Bot {
-	public class CommandHandler {
+	public abstract class CommandHandler {
 		protected string commandIdentifier;
 		protected SocketMessage message;
 
@@ -11,6 +11,10 @@ namespace Tea_and_Tea_Discord_Bot {
 			this.commandIdentifier = commandIdentifier;
 			this.message = message;
 		}
+
+
+
+		public abstract void HandleCommand(string command);
 
 		public bool IsCommand(string messageText) {
 			return messageText.StartsWith(commandIdentifier);
@@ -26,7 +30,15 @@ namespace Tea_and_Tea_Discord_Bot {
 			return true;
 		}
 
-		public void HandleCommand(SocketMessage message, string command) {
+		protected void SendMessage(SocketMessage message, string text) {
+			message.Channel.SendMessageAsync(text);
+		}
+	}
+
+	public class BotCommandHandler : CommandHandler {
+		public BotCommandHandler(string commandIdentifier, SocketMessage message) : base(commandIdentifier, message) { }
+
+		public override void HandleCommand(string command) {
 			Console.WriteLine($"Обробка команди {command}");
 			command = command.Trim().ToLower();
 
@@ -66,10 +78,6 @@ namespace Tea_and_Tea_Discord_Bot {
 			else {
 				SendMessage(message, "Невідома команда");
 			}
-		}
-
-		protected void SendMessage(SocketMessage message, string text) {
-			message.Channel.SendMessageAsync(text);
 		}
 	}
 }

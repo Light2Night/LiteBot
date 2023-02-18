@@ -73,9 +73,9 @@ namespace Tea_and_Tea_Discord_Bot {
 
 			PrintMessageInfo(message);
 
-			CommandHandler commandHandler = new CommandHandler("=", message);
+			CommandHandler commandHandler = new BotCommandHandler("=", message);
 			if (commandHandler.IsCommand(message.Content, out string command)) {
-				commandHandler.HandleCommand(message, command);
+				commandHandler.HandleCommand(command);
 			}
 		}
 	}
