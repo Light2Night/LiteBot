@@ -53,6 +53,8 @@ namespace CS_DiscordBot {
 			return Task.CompletedTask;
 		}
 
+
+
 		protected void PrintMessageInfo(SocketMessage message) {
 			Console.WriteLine(
 				$"Channel: {message.Channel}\n" +

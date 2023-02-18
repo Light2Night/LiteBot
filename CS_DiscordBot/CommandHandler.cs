@@ -111,7 +111,8 @@ namespace CS_DiscordBot {
 				"Доступні команди:\n" +
 				"Час\n" +
 				"Автор\n" +
-				"Привіт"
+				"Привіт\n" +
+				"Арт"
 			);
 		}
 	}
@@ -151,8 +152,8 @@ namespace CS_DiscordBot {
 		public ArtHandler(string commandIdentifier, SocketMessage message)
 			: base(commandIdentifier, message,
 				new List<CommandHandler>() {
-					new ArtWithCountHandler("кількість", message),
-					new ArtHelpHandler("?", message)
+					new ArtHelpHandler("?", message),
+					new ArtWithCountHandler("кількість", message)
 				}
 			) { }
 
