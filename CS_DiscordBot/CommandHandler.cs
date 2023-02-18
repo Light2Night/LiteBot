@@ -3,7 +3,13 @@
 using ArtApp.Web;
 
 namespace Tea_and_Tea_Discord_Bot {
-	public abstract class CommandHandler {
+	public interface ICommandHandler {
+		void HandleCommand(string command);
+		bool IsCommand(string messageText);
+		bool IsCommand(string messageText, out string commandText);
+	}
+
+	public abstract class CommandHandler : ICommandHandler {
 		protected string commandIdentifier;
 		protected SocketMessage message;
 
