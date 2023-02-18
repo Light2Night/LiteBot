@@ -2,7 +2,7 @@
 
 using ArtApp.Web;
 
-namespace Tea_and_Tea_Discord_Bot {
+namespace CS_DiscordBot {
 	public interface ICommandHandler {
 		void HandleCommand(string command);
 		bool IsCommand(string messageText);
@@ -28,10 +28,10 @@ namespace Tea_and_Tea_Discord_Bot {
 				throw new IsNotCommandException();
 			}
 
-			DoCommand(argumentsText);
+			ExecuteCommand(argumentsText);
 		}
 
-		protected virtual void DoCommand(string arguments) {
+		protected virtual void ExecuteCommand(string arguments) {
 			if (arguments == "") {
 				DefaultAction();
 			}
@@ -70,7 +70,7 @@ namespace Tea_and_Tea_Discord_Bot {
 			this.commandHandlers = commandHandlers;
 		}
 
-		protected override void DoCommand(string arguments) {
+		protected override void ExecuteCommand(string arguments) {
 			if (arguments == "") {
 				DefaultAction();
 				return;
@@ -176,7 +176,7 @@ namespace Tea_and_Tea_Discord_Bot {
 	public class ArtWithCountHandler : CommandHandler {
 		public ArtWithCountHandler(string commandIdentifier, SocketMessage message) : base(commandIdentifier, message) { }
 
-		protected override void DoCommand(string arguments) {
+		protected override void ExecuteCommand(string arguments) {
 			if (IsUInt32(arguments)) {
 				uint numberOfPictures = Convert.ToUInt32(arguments);
 				if (numberOfPictures > 10) {

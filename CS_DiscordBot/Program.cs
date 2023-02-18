@@ -7,10 +7,8 @@ using System.Collections.Generic;
 
 using Discord;
 using Discord.WebSocket;
-using Newtonsoft.Json.Linq;
-using static System.Net.Mime.MediaTypeNames;
 
-namespace Tea_and_Tea_Discord_Bot {
+namespace CS_DiscordBot {
 	internal class Program {
 		protected DiscordSocketClient client;
 		protected static Random random = new Random(DateTime.Now.Millisecond);
@@ -74,7 +72,7 @@ namespace Tea_and_Tea_Discord_Bot {
 
 			PrintMessageInfo(message);
 
-			CommandHandler commandHandler = new BotCommandHandler("=", message);
+			ICommandHandler commandHandler = new BotCommandHandler("=", message);
 			try {
 				commandHandler.HandleCommand(message.Content);
 			}
