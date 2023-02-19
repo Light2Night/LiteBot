@@ -97,7 +97,8 @@ namespace CS_DiscordBot {
 					  new TimeHandler("час", message),
 					  new AuthorHandler("автор", message),
 					  new HelloHandler("привіт", message),
-					  new ArtHandler("арт", message)
+					  new ArtHandler("арт", message),
+					  new RandomHandler("рандом", message)
 				  }
 			) { }
 	}
@@ -199,20 +200,32 @@ namespace CS_DiscordBot {
 		public RandomHandler(string commandIdentifier, SocketMessage message) : base(commandIdentifier, message) { }
 
 		protected override void ExecuteCommand(string arguments) {
-			if (IsRandRange(arguments)) {
+			if (IsRandRange(arguments.Trim(), out uint first, out uint second)) {
+				if (first > second) {
+					SendMessage(message, "Некоректний діапазон");
+					return;
+				}
 
+				SendMessage(message, new Random(DateTime.Now.Millisecond).Next((int)first, (int)second + 1).ToString());
 			}
 			else {
 				throw new UnknownCommandException();
 			}
 		}
 
-		protected bool IsRandRange(string argument) {
+		protected bool IsRandRange(string argument, out uint first, out uint second) {
+			first = second = 0;
+
 			string[] arguments = argument.Split("-");
-			if (argument.Length != 2)
+			if (arguments.Length != 2)
 				return false;
 
-			return TypeChecker.IsUInt32(arguments[0]) && TypeChecker.IsUInt32(arguments[1]);
+			if (!TypeChecker.IsUInt32(arguments[0]) && TypeChecker.IsUInt32(arguments[1]))
+				return false;
+
+			first = Convert.ToUInt32(arguments[0]);
+			second = Convert.ToUInt32(arguments[1]);
+			return true;
 		}
 	}
 
