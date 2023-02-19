@@ -178,7 +178,7 @@ namespace CS_DiscordBot {
 		public ArtWithCountHandler(string commandIdentifier, SocketMessage message) : base(commandIdentifier, message) { }
 
 		protected override void ExecuteCommand(string arguments) {
-			if (IsUInt32(arguments)) {
+			if (TypeChecker.IsUInt32(arguments)) {
 				uint numberOfPictures = Convert.ToUInt32(arguments);
 				if (numberOfPictures > 10) {
 					SendMessage(message, "Занадто багато зображень");
@@ -193,14 +193,26 @@ namespace CS_DiscordBot {
 				throw new UnknownCommandException();
 			}
 		}
+	}
 
-		protected bool IsUInt32(string number) {
-			try {
-				Convert.ToUInt32(number);
-				return true;
+	public class RandomHandler : CommandHandler {
+		public RandomHandler(string commandIdentifier, SocketMessage message) : base(commandIdentifier, message) { }
+
+		protected override void ExecuteCommand(string arguments) {
+			if (IsRandRange(arguments)) {
+
 			}
-			catch (Exception) { }
-			return false;
+			else {
+				throw new UnknownCommandException();
+			}
+		}
+
+		protected bool IsRandRange(string argument) {
+			string[] arguments = argument.Split("-");
+			if (argument.Length != 2)
+				return false;
+
+			return TypeChecker.IsUInt32(arguments[0]) && TypeChecker.IsUInt32(arguments[1]);
 		}
 	}
 
