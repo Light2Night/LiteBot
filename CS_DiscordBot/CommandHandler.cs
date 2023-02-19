@@ -54,7 +54,7 @@ namespace CS_DiscordBot {
 				return false;
 			}
 
-			commandText = messageText.Substring(commandIdentifier.Length, messageText.Length - commandIdentifier.Length);
+			commandText = messageText.Substring(commandIdentifier.Length, messageText.Length - commandIdentifier.Length).Trim();
 			return true;
 		}
 
@@ -113,7 +113,8 @@ namespace CS_DiscordBot {
 				"Час\n" +
 				"Автор\n" +
 				"Привіт\n" +
-				"Арт"
+				"Арт\n" +
+				"Рандом \"від\"-\"до\""
 			);
 		}
 	}
