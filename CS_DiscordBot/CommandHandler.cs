@@ -54,7 +54,7 @@ namespace CS_DiscordBot {
 				return false;
 			}
 
-			commandText = messageText.Substring(commandIdentifier.Length, messageText.Length - commandIdentifier.Length);
+			commandText = messageText.Substring(commandIdentifier.Length, messageText.Length - commandIdentifier.Length).Trim();
 			return true;
 		}
 
@@ -97,7 +97,8 @@ namespace CS_DiscordBot {
 					  new TimeHandler("час", message),
 					  new AuthorHandler("автор", message),
 					  new HelloHandler("привіт", message),
-					  new ArtHandler("арт", message)
+					  new ArtHandler("арт", message),
+					  new RandomHandler("рандом", message)
 				  }
 			) { }
 	}
@@ -111,7 +112,8 @@ namespace CS_DiscordBot {
 				"Час\n" +
 				"Автор\n" +
 				"Привіт\n" +
-				"Арт"
+				"Арт\n" +
+				"Рандом \"від\"-\"до\""
 			);
 		}
 	}
@@ -176,7 +178,7 @@ namespace CS_DiscordBot {
 		public ArtWithCountHandler(string commandIdentifier, SocketMessage message) : base(commandIdentifier, message) { }
 
 		protected override void ExecuteCommand(string arguments) {
-			if (IsUInt32(arguments)) {
+			if (TypeChecker.IsUInt32(arguments)) {
 				uint numberOfPictures = Convert.ToUInt32(arguments);
 				if (numberOfPictures > 10) {
 					SendMessage("Занадто багато зображень");
@@ -191,14 +193,38 @@ namespace CS_DiscordBot {
 				throw new UnknownCommandException();
 			}
 		}
+	}
 
-		protected bool IsUInt32(string number) {
-			try {
-				Convert.ToUInt32(number);
-				return true;
+	public class RandomHandler : CommandHandler {
+		public RandomHandler(string commandIdentifier, SocketMessage message) : base(commandIdentifier, message) { }
+
+		protected override void ExecuteCommand(string arguments) {
+			if (IsRandRange(arguments.Trim(), out uint first, out uint second)) {
+				if (first > second) {
+					SendMessage(message, "Некоректний діапазон");
+					return;
+				}
+
+				SendMessage(message, new Random(DateTime.Now.Millisecond).Next((int)first, (int)second + 1).ToString());
 			}
-			catch (Exception) { }
-			return false;
+			else {
+				throw new UnknownCommandException();
+			}
+		}
+
+		protected bool IsRandRange(string argument, out uint first, out uint second) {
+			first = second = 0;
+
+			string[] arguments = argument.Split("-");
+			if (arguments.Length != 2)
+				return false;
+
+			if (!TypeChecker.IsUInt32(arguments[0]) && TypeChecker.IsUInt32(arguments[1]))
+				return false;
+
+			first = Convert.ToUInt32(arguments[0]);
+			second = Convert.ToUInt32(arguments[1]);
+			return true;
 		}
 	}
 
