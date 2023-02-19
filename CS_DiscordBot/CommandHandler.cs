@@ -158,7 +158,7 @@ namespace CS_DiscordBot {
 			) { }
 
 		protected override void DefaultAction() {
-			SendMessage(message, WebLoad.GetPictureUrlFromApi("https://api.waifu.pics/sfw/neko", "\"url\":\"([^\"]*)\""));
+			new ArtWithCountHandler("", message).HandleCommand("1");
 		}
 	}
 
