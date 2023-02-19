@@ -58,7 +58,7 @@ namespace CS_DiscordBot {
 			return true;
 		}
 
-		protected void SendMessage(SocketMessage message, string text) {
+		protected void SendMessage(string text) {
 			message.Channel.SendMessageAsync(text);
 		}
 	}
@@ -107,7 +107,6 @@ namespace CS_DiscordBot {
 
 		protected override void DefaultAction() {
 			SendMessage(
-				message,
 				"Доступні команди:\n" +
 				"Час\n" +
 				"Автор\n" +
@@ -121,9 +120,9 @@ namespace CS_DiscordBot {
 		public TimeHandler(string commandIdentifier, SocketMessage message) : base(commandIdentifier, message) { }
 
 		protected override void DefaultAction() {
-			SendMessage(message, $"{DateTime.Now.ToLongTimeString()}\n{DateTime.Now.ToLongDateString()}");
+			SendMessage($"{DateTime.Now.ToLongTimeString()}\n{DateTime.Now.ToLongDateString()}");
 			if (DateTime.Now.Hour < 8)
-				SendMessage(message, "Іншими словами час спати");
+				SendMessage("Іншими словами час спати");
 		}
 	}
 
@@ -131,7 +130,7 @@ namespace CS_DiscordBot {
 		public AuthorHandler(string commandIdentifier, SocketMessage message) : base(commandIdentifier, message) { }
 
 		protected override void DefaultAction() {
-			SendMessage(message, "<@!883836608963555339> Lite#5625");
+			SendMessage("<@!883836608963555339> Lite#5625");
 		}
 	}
 
@@ -140,10 +139,10 @@ namespace CS_DiscordBot {
 
 		protected override void DefaultAction() {
 			if (message.Author.Id == 883836608963555339) {
-				SendMessage(message, "Вітаю!");
+				SendMessage("Вітаю!");
 			}
 			else {
-				SendMessage(message, "Ти хто такий?");
+				SendMessage("Ти хто такий?");
 			}
 		}
 	}
@@ -167,7 +166,6 @@ namespace CS_DiscordBot {
 
 		protected override void DefaultAction() {
 			SendMessage(
-				message,
 				"Доступні команди:\n" +
 				"Кількість \"число\""
 			);
@@ -181,12 +179,12 @@ namespace CS_DiscordBot {
 			if (IsUInt32(arguments)) {
 				uint numberOfPictures = Convert.ToUInt32(arguments);
 				if (numberOfPictures > 10) {
-					SendMessage(message, "Занадто багато зображень");
+					SendMessage("Занадто багато зображень");
 					return;
 				}
 
 				for (uint i = 0; i < numberOfPictures; i++) {
-					SendMessage(message, WebLoad.GetPictureUrlFromApi("https://api.waifu.pics/sfw/neko", "\"url\":\"([^\"]*)\""));
+					SendMessage(WebLoad.GetPictureUrlFromApi("https://api.waifu.pics/sfw/neko", "\"url\":\"([^\"]*)\""));
 				}
 			}
 			else {
