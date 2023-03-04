@@ -38,7 +38,7 @@ public abstract class CommandHandler : ICommandHandler {
 	}
 
 	protected virtual void ExecuteCommand(string arguments) {
-		if (arguments == "") {
+		if (arguments == string.Empty) {
 			DefaultAction();
 		}
 		else {
@@ -56,7 +56,7 @@ public abstract class CommandHandler : ICommandHandler {
 
 	public bool IsCommand(string messageText, out string commandText) {
 		if (!IsCommand(messageText)) {
-			commandText = "";
+			commandText = string.Empty;
 			return false;
 		}
 
@@ -79,7 +79,7 @@ public abstract class CommandHandlerWithCommandList : CommandHandler {
 	}
 
 	protected override void ExecuteCommand(string arguments) {
-		if (arguments == "") {
+		if (arguments == string.Empty) {
 			DefaultAction();
 			return;
 		}

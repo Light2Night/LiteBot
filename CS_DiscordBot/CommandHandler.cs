@@ -69,7 +69,7 @@ public class ArtHandler : CommandHandler {
 	public ArtHandler(string commandIdentifier, SocketMessage message) : base(commandIdentifier, message) { }
 
 	protected override void ExecuteCommand(string arguments) {
-		if (arguments == "") {
+		if (arguments == string.Empty) {
 			DefaultAction();
 		}
 		else if (arguments == "?") {
@@ -106,7 +106,7 @@ public class RandomHandler : CommandHandler {
 		if (arguments == string.Empty) {
 			SendMessage(new Random(DateTime.Now.Millisecond).Next().ToString());
 		}
-		if (IsRandRange(arguments, out uint first, out uint second)) {
+		else if (IsRandRange(arguments, out uint first, out uint second)) {
 			if (first > second) {
 				SendMessage("Некоректний діапазон");
 				return;
