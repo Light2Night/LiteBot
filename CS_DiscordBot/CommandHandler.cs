@@ -24,12 +24,14 @@ public class BotHelpHandler : CommandHandler {
 	protected override void DefaultAction() {
 		SendMessage(
 			"Доступні команди:\n" +
-			"? - меню доступних можливостей\n" +
-			"Час\n" +
-			"Автор\n" +
-			"Привіт\n" +
-			"Арт\n" +
-			"Рандом \"від\"-\"до\""
+			"	Корисні:\n" +
+			"		? - меню доступних можливостей\n" +
+			"		Час\n" +
+			"		Арт\n" +
+			"		Рандом \"від\"-\"до\"\n" +
+			"	Менш корисні\n" +
+			"		Привіт\n" +
+			"		Автор\n"
 		);
 	}
 }
@@ -75,7 +77,7 @@ public class ArtHandler : CommandHandler {
 		else if (arguments == "?") {
 			SendMessage(
 				"Доступні команди:\n" +
-				"\"число\" - для надсилання кількох артів"
+				"\t\"число\" - для надсилання кількох артів"
 			);
 		}
 		else if (TypeChecker.IsUInt32(arguments)) {
