@@ -16,7 +16,7 @@ public interface ICommandHandler {
 
 
 public abstract class CommandHandler : ICommandHandler {
-	protected string commandIdentifier;
+	protected readonly string commandIdentifier;
 	protected SocketMessage message;
 
 	public CommandHandler(string commandIdentifier, SocketMessage message) {

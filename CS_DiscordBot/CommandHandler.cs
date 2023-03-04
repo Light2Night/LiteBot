@@ -24,6 +24,7 @@ public class BotHelpHandler : CommandHandler {
 	protected override void DefaultAction() {
 		SendMessage(
 			"Доступні команди:\n" +
+			"? - меню доступних можливостей\n" +
 			"Час\n" +
 			"Автор\n" +
 			"Привіт\n" +
@@ -98,21 +99,13 @@ public class ArtHandler : CommandHandler {
 	}
 }
 
-public class ArtHelpHandler : CommandHandler {
-	public ArtHelpHandler(string commandIdentifier, SocketMessage message) : base(commandIdentifier, message) { }
-
-	protected override void DefaultAction() {
-		SendMessage(
-			"Доступні команди:\n" +
-			"Кількість \"число\""
-		);
-	}
-}
-
 public class RandomHandler : CommandHandler {
 	public RandomHandler(string commandIdentifier, SocketMessage message) : base(commandIdentifier, message) { }
 
 	protected override void ExecuteCommand(string arguments) {
+		if (arguments == string.Empty) {
+			SendMessage(new Random(DateTime.Now.Millisecond).Next().ToString());
+		}
 		if (IsRandRange(arguments, out uint first, out uint second)) {
 			if (first > second) {
 				SendMessage("Некоректний діапазон");
