@@ -12,6 +12,7 @@ namespace CS_DiscordBot {
 	internal class Program {
 		protected DiscordSocketClient client;
 		protected static Random random = new Random(DateTime.Now.Millisecond);
+		protected ICommandHandler commandHandler = new BotCommandHandler("=");
 
 		private static Task Main(string[] args) => new Program().MainAsync();
 
@@ -31,10 +32,7 @@ namespace CS_DiscordBot {
 		protected void CreateClientInstance() {
 			client = new DiscordSocketClient(
 				new DiscordSocketConfig {
-					GatewayIntents = GatewayIntents.All,
-					//LogLevel = LogSeverity.Verbose,
-					//AlwaysDownloadUsers = true,
-					//MessageCacheSize = 200
+					GatewayIntents = GatewayIntents.All
 				}
 			);
 
@@ -74,13 +72,23 @@ namespace CS_DiscordBot {
 
 			PrintMessageInfo(message);
 
-			ICommandHandler commandHandler = new BotCommandHandler("=", message);
+			//IReadOnlyCollection<Attachment> collection = message.Attachments;
+			//foreach (Attachment item in collection) {
+			//	Console.WriteLine("" + item.ToString());
+			//	Console.WriteLine("ContentType: " + item.ContentType);
+			//	Console.WriteLine("Description: " + item.Description);
+			//	Console.WriteLine("URL: " + item.Url);
+			//}
+
 			try {
-				commandHandler.HandleCommand(message.Content);
+				commandHandler.HandleCommand(message);
 			}
 			catch (IsNotCommandException) { }
 			catch (UnknownCommandException) {
 				message.Channel.SendMessageAsync("Невідома команда");
+			}
+			catch (Exception e) {
+				message.Channel.SendMessageAsync($"Невідома помилка, код помилки {e}");
 			}
 		}
 	}

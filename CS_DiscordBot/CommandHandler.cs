@@ -5,21 +5,21 @@ using ArtApp.Web;
 namespace CS_DiscordBot;
 
 public class BotCommandHandler : CommandHandlerWithCommandList {
-	public BotCommandHandler(string commandIdentifier, SocketMessage message)
-		: base(commandIdentifier, message,
+	public BotCommandHandler(string commandIdentifier)
+		: base(commandIdentifier,
 			  new List<CommandHandler>() {
-				  new BotHelpHandler("?", message),
-				  new TimeHandler("час", message),
-				  new AuthorHandler("автор", message),
-				  new HelloHandler("привіт", message),
-				  new ArtHandler("арт", message),
-				  new RandomHandler("рандом", message)
+				  new BotHelpHandler("?"),
+				  new TimeHandler("час"),
+				  new AuthorHandler("автор"),
+				  new HelloHandler("привіт"),
+				  new ArtHandler("арт"),
+				  new RandomHandler("рандом")
 			  }
 		) { }
 }
 
 public class BotHelpHandler : CommandHandler {
-	public BotHelpHandler(string commandIdentifier, SocketMessage message) : base(commandIdentifier, message) { }
+	public BotHelpHandler(string commandIdentifier) : base(commandIdentifier) { }
 
 	protected override void DefaultAction() {
 		SendMessage(
@@ -37,7 +37,7 @@ public class BotHelpHandler : CommandHandler {
 }
 
 public class TimeHandler : CommandHandler {
-	public TimeHandler(string commandIdentifier, SocketMessage message) : base(commandIdentifier, message) { }
+	public TimeHandler(string commandIdentifier) : base(commandIdentifier) { }
 
 	protected override void DefaultAction() {
 		SendMessage($"{DateTime.Now.ToLongTimeString()}\n{DateTime.Now.ToLongDateString()}");
@@ -47,7 +47,7 @@ public class TimeHandler : CommandHandler {
 }
 
 public class AuthorHandler : CommandHandler {
-	public AuthorHandler(string commandIdentifier, SocketMessage message) : base(commandIdentifier, message) { }
+	public AuthorHandler(string commandIdentifier) : base(commandIdentifier) { }
 
 	protected override void DefaultAction() {
 		SendMessage("<@!883836608963555339> Lite#5625");
@@ -55,10 +55,10 @@ public class AuthorHandler : CommandHandler {
 }
 
 public class HelloHandler : CommandHandler {
-	public HelloHandler(string commandIdentifier, SocketMessage message) : base(commandIdentifier, message) { }
+	public HelloHandler(string commandIdentifier) : base(commandIdentifier) { }
 
 	protected override void DefaultAction() {
-		if (message.Author.Id == 883836608963555339) {
+		if (socketMessage.Author.Id == 883836608963555339) {
 			SendMessage("Вітаю!");
 		}
 		else {
@@ -68,7 +68,8 @@ public class HelloHandler : CommandHandler {
 }
 
 public class ArtHandler : CommandHandler {
-	public ArtHandler(string commandIdentifier, SocketMessage message) : base(commandIdentifier, message) { }
+	public ArtHandler(string commandIdentifier) : base(commandIdentifier) { }
+	protected readonly string apiFilePath = "api.txt";
 
 	protected override void ExecuteCommand(string arguments) {
 		if (arguments == string.Empty) {
@@ -77,8 +78,30 @@ public class ArtHandler : CommandHandler {
 		else if (arguments == "?") {
 			SendMessage(
 				"Доступні команди:\n" +
-				"\t\"число\" - для надсилання кількох артів"
+				"	\"число\" - для надсилання кількох артів\n" +
+				"	джерело - список стандартних API\n" +
+				"	джерело \"посилання\" - змінити джерело на нове"
 			);
+		}
+		else if (arguments == "джерело") {
+			SendMessage(
+				"Джерела що підтримуються:\n" +
+				"	https://api.waifu.pics/sfw/neko\n" +
+				"	https://api.waifu.im/search/?included_tags=maid\n" +
+				"	https://api.waifu.im/search/?included_tags=waifu\n" +
+				"	https://api.waifu.im/search/?included_tags=marin-kitagawa\n" +
+				"	https://api.waifu.im/search/?included_tags=mori-calliope\n" +
+				"	https://api.waifu.im/search/?included_tags=raiden-shogun\n" +
+				"	https://api.waifu.im/search/?included_tags=oppai\n" +
+				"	https://api.waifu.im/search/?included_tags=selfies\n" +
+				"	https://api.waifu.im/search/?included_tags=uniform\n" +
+				"Можа спробувати ввести інше джерело, можливо воно буде працювати"
+			);
+		}
+		else if (arguments.StartsWith("джерело")) {
+			File.WriteAllText(apiFilePath, arguments.Remove(0, "джерело".Length).Trim());
+
+			SendMessage("Джерело змінено");
 		}
 		else if (TypeChecker.IsUInt32(arguments)) {
 			uint numberOfPictures = Convert.ToUInt32(arguments);
@@ -97,12 +120,12 @@ public class ArtHandler : CommandHandler {
 	}
 
 	protected override void DefaultAction() {
-		SendMessage(WebLoad.GetPictureUrlFromApi("https://api.waifu.pics/sfw/neko", "\"url\":\"([^\"]*)\""));
+		SendMessage(WebLoad.GetPictureUrlFromApi(File.ReadAllText(apiFilePath), "\"url\":\"([^\"]*)\""));
 	}
 }
 
 public class RandomHandler : CommandHandler {
-	public RandomHandler(string commandIdentifier, SocketMessage message) : base(commandIdentifier, message) { }
+	public RandomHandler(string commandIdentifier) : base(commandIdentifier) { }
 
 	protected override void ExecuteCommand(string arguments) {
 		if (arguments == string.Empty) {

@@ -8,7 +8,8 @@ using System.Threading.Tasks;
 namespace CS_DiscordBot;
 
 public interface ICommandHandler {
-	void HandleCommand(string command);
+	void HandleCommand(SocketMessage socketMessage);
+	void HandleCommand(SocketMessage socketMessage, string command);
 	bool IsCommand(string messageText);
 	bool IsCommand(string messageText, out string commandText);
 }
@@ -17,16 +18,25 @@ public interface ICommandHandler {
 
 public abstract class CommandHandler : ICommandHandler {
 	protected readonly string commandIdentifier;
-	protected SocketMessage message;
+	protected SocketMessage socketMessage = null;
 
-	public CommandHandler(string commandIdentifier, SocketMessage message) {
+	public CommandHandler(string commandIdentifier) {
 		this.commandIdentifier = commandIdentifier;
-		this.message = message;
 	}
 
 
 
-	public void HandleCommand(string command) {
+	public void HandleCommand(SocketMessage socketMessage) {
+		this.socketMessage = socketMessage;
+		HandleCommand(socketMessage.Content);
+	}
+
+	public void HandleCommand(SocketMessage socketMessage, string command) {
+		this.socketMessage = socketMessage;
+		HandleCommand(command);
+	}
+
+	protected void HandleCommand(string command) {
 		//Console.WriteLine($"Обробка команди {command}");
 		command = command.Trim().ToLower();
 
@@ -65,7 +75,7 @@ public abstract class CommandHandler : ICommandHandler {
 	}
 
 	protected void SendMessage(string text) {
-		message.Channel.SendMessageAsync(text);
+		socketMessage.Channel.SendMessageAsync(text);
 	}
 }
 
@@ -74,7 +84,7 @@ public abstract class CommandHandler : ICommandHandler {
 public abstract class CommandHandlerWithCommandList : CommandHandler {
 	protected List<CommandHandler> commandHandlers;
 
-	public CommandHandlerWithCommandList(string commandIdentifier, SocketMessage message, List<CommandHandler> commandHandlers) : base(commandIdentifier, message) {
+	public CommandHandlerWithCommandList(string commandIdentifier, List<CommandHandler> commandHandlers) : base(commandIdentifier) {
 		this.commandHandlers = commandHandlers;
 	}
 
@@ -86,7 +96,7 @@ public abstract class CommandHandlerWithCommandList : CommandHandler {
 
 		foreach (CommandHandler handler in commandHandlers) {
 			try {
-				handler.HandleCommand(arguments);
+				handler.HandleCommand(socketMessage, arguments);
 				return;
 			}
 			catch (IsNotCommandException) { }
