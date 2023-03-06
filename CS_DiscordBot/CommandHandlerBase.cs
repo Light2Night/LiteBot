@@ -51,12 +51,19 @@ public abstract class CommandHandler : ICommandHandler {
 		if (arguments == string.Empty) {
 			DefaultAction();
 		}
+		else if (arguments == "?") {
+			HelpMessage();
+		}
 		else {
 			throw new UnknownCommandException();
 		}
 	}
 
 	protected virtual void DefaultAction() {
+		throw new UnknownCommandException();
+	}
+
+	protected virtual void HelpMessage() {
 		throw new UnknownCommandException();
 	}
 
@@ -91,6 +98,10 @@ public abstract class CommandHandlerWithCommandList : CommandHandler {
 	protected override void ExecuteCommand(string arguments) {
 		if (arguments == string.Empty) {
 			DefaultAction();
+			return;
+		}
+		else if (arguments == "?") {
+			HelpMessage();
 			return;
 		}
 

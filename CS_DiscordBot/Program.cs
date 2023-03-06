@@ -85,7 +85,7 @@ namespace CS_DiscordBot {
 			}
 			catch (IsNotCommandException) { }
 			catch (UnknownCommandException) {
-				message.Channel.SendMessageAsync("Невідома команда");
+				message.Channel.SendMessageAsync("Невідома команда, для детальнішої інформації про команди спробуйте \"=?\"");
 			}
 			catch (Exception e) {
 				message.Channel.SendMessageAsync($"Невідома помилка, код помилки {e}");

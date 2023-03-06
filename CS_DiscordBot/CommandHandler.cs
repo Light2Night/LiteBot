@@ -5,30 +5,24 @@ using ArtApp.Web;
 namespace CS_DiscordBot;
 
 public class BotCommandHandler : CommandHandlerWithCommandList {
-	public BotCommandHandler(string commandIdentifier)
-		: base(commandIdentifier,
-			  new List<CommandHandler>() {
-				  new BotHelpHandler("?"),
-				  new TimeHandler("час"),
-				  new AuthorHandler("автор"),
-				  new HelloHandler("привіт"),
-				  new ArtHandler("арт"),
-				  new RandomHandler("рандом")
-			  }
-		) { }
-}
+	public BotCommandHandler(string commandIdentifier) : base(
+		commandIdentifier,
+		new List<CommandHandler>() {
+			new TimeHandler("час"),
+			new AuthorHandler("автор"),
+			new HelloHandler("привіт"),
+			new ArtHandler("арт"),
+			new RandomHandler("рандом")
+		}
+	) { }
 
-public class BotHelpHandler : CommandHandler {
-	public BotHelpHandler(string commandIdentifier) : base(commandIdentifier) { }
-
-	protected override void DefaultAction() {
+	protected override void HelpMessage() {
 		SendMessage(
 			"Доступні команди:\n" +
 			"	Корисні:\n" +
-			"		? - меню доступних можливостей\n" +
 			"		Час\n" +
 			"		Арт\n" +
-			"		Рандом \"від\"-\"до\"\n" +
+			"		Рандом\n" +
 			"	Менш корисні\n" +
 			"		Привіт\n" +
 			"		Автор\n"
@@ -76,12 +70,7 @@ public class ArtHandler : CommandHandler {
 			DefaultAction();
 		}
 		else if (arguments == "?") {
-			SendMessage(
-				"Доступні команди:\n" +
-				"	\"число\" - для надсилання кількох артів\n" +
-				"	джерело - список стандартних API\n" +
-				"	джерело \"посилання\" - змінити джерело на нове"
-			);
+			HelpMessage();
 		}
 		else if (arguments == "джерело") {
 			SendMessage(
@@ -122,14 +111,29 @@ public class ArtHandler : CommandHandler {
 	protected override void DefaultAction() {
 		SendMessage(WebLoad.GetPictureUrlFromApi(File.ReadAllText(apiFilePath), "\"url\":\"([^\"]*)\""));
 	}
+
+	protected override void HelpMessage() {
+		SendMessage(
+			"Доступні команди:\n" +
+				"	\"Немає аргументів\" - вивід одного арту\n" +
+				"	\"число\" - для надсилання кількох артів\n" +
+				"	джерело - список стандартних API\n" +
+				"	джерело \"посилання\" - змінити джерело на нове"
+		);
+	}
 }
 
 public class RandomHandler : CommandHandler {
+	protected Random random = new Random(DateTime.Now.Millisecond);
+
 	public RandomHandler(string commandIdentifier) : base(commandIdentifier) { }
 
 	protected override void ExecuteCommand(string arguments) {
 		if (arguments == string.Empty) {
-			SendMessage(new Random(DateTime.Now.Millisecond).Next().ToString());
+			SendMessage(random.Next().ToString());
+		}
+		else if (arguments == "?") {
+			HelpMessage();
 		}
 		else if (IsRandRange(arguments, out uint first, out uint second)) {
 			if (first > second) {
@@ -142,6 +146,14 @@ public class RandomHandler : CommandHandler {
 		else {
 			throw new UnknownCommandException();
 		}
+	}
+
+	protected override void HelpMessage() {
+		SendMessage(
+			"Доступні команди:\n" +
+				"	\"Немає аргументів\" - надсилає випадкове число\n" +
+				"	\"число\"-\"число\" - надсилає число в заданому діапазоні"
+		);
 	}
 
 	protected bool IsRandRange(string argument, out uint first, out uint second) {
