@@ -38,6 +38,11 @@ namespace CS_DiscordBot {
 
 			client.MessageReceived += CommandsHandler;
 			client.Log += Log;
+			client.Ready += () => {
+				Console.WriteLine("Bot is ready to use!");
+				return Task.CompletedTask;
+			};
+			client.MessageUpdated += MessageUpdated;
 		}
 
 		// Обробники подій
@@ -49,6 +54,12 @@ namespace CS_DiscordBot {
 		private Task Log(LogMessage msg) {
 			Console.WriteLine(msg.ToString());
 			return Task.CompletedTask;
+		}
+
+		private async Task MessageUpdated(Cacheable<IMessage, ulong> before, SocketMessage after, ISocketMessageChannel channel) {
+			// If the message was not in the cache, downloading it will result in getting a copy of `after`.
+			var message = await before.GetOrDownloadAsync();
+			Console.WriteLine($"{message} -> {after}");
 		}
 
 

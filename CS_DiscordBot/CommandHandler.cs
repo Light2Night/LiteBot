@@ -23,7 +23,7 @@ public class BotCommandHandler : CommandHandlerWithCommandList {
 			"		Час\n" +
 			"		Арт\n" +
 			"		Рандом\n" +
-			"	Менш корисні\n" +
+			"	Менш корисні:\n" +
 			"		Привіт\n" +
 			"		Автор\n"
 		);
