@@ -63,12 +63,29 @@ public abstract class CommandHandler : ICommandHandler {
 		throw new UnknownCommandException();
 	}
 
+
 	public bool IsCommand(string messageText) {
-		return messageText.StartsWith(commandIdentifier);
+		return IsCommandBase(messageText, commandIdentifier, "");
 	}
 
 	public bool IsCommand(string messageText, out string commandText) {
-		if (!IsCommand(messageText)) {
+		return IsCommandBase(messageText, commandIdentifier, "", out commandText);
+	}
+
+	public bool IsSubcommand(string messageText, string commandIdentifier) {
+		return IsCommandBase(messageText, commandIdentifier, " ");
+	}
+
+	public bool IsSubcommand(string messageText, string commandIdentifier, out string commandText) {
+		return IsCommandBase(messageText, commandIdentifier, " ", out commandText);
+	}
+
+	private bool IsCommandBase(string messageText, string commandIdentifier, string separator) {
+		return messageText.StartsWith(commandIdentifier + separator);
+	}
+
+	private bool IsCommandBase(string messageText, string commandIdentifier, string separator, out string commandText) {
+		if (!IsCommandBase(messageText, commandIdentifier, separator)) {
 			commandText = string.Empty;
 			return false;
 		}
@@ -76,6 +93,7 @@ public abstract class CommandHandler : ICommandHandler {
 		commandText = messageText.Substring(commandIdentifier.Length, messageText.Length - commandIdentifier.Length).Trim();
 		return true;
 	}
+
 
 	protected void SendMessage(string text) {
 		socketMessage.Channel.SendMessageAsync(text);
