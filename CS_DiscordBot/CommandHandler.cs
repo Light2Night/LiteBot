@@ -1,6 +1,7 @@
 ﻿using Discord;
 
 using ArtApp.Web;
+using Discord.WebSocket;
 
 namespace CS_DiscordBot;
 
@@ -176,38 +177,37 @@ public class RandomHandler : CommandHandler {
 
 public class StableDiffusionHandler : CommandHandler {
 	protected StableDiffusionApi stableDiffusionInterface = new();
+	protected StableDiffusionQueue diffusionQueue = new();
 
 	public StableDiffusionHandler(string commandIdentifier) : base(commandIdentifier) { }
 
 	protected override void ExecuteCommand(string arguments) {
-		new Thread(() => {
-			lock (this) {
-				if (arguments == string.Empty) {
-					DefaultAction();
-				}
-				else if (arguments == "?") {
-					HelpMessage();
-				}
-				else if (IsSubcommand(arguments, "p", out string prompt) || IsSubcommand(arguments, "prompt", out prompt)) {
-					stableDiffusionInterface.SetJsonValue("prompt", prompt);
-				}
-				else if (IsSubcommand(arguments, "np", out string nPrompt) || IsSubcommand(arguments, "negative prompt", out nPrompt)) {
-					stableDiffusionInterface.SetJsonValue("negative_prompt", nPrompt);
-				}
-				else if (arguments != string.Empty) {
-					stableDiffusionInterface.SetJsonValue("prompt", arguments);
-					DefaultAction();
-				}
-				else {
-					throw new UnknownCommandException();
-				}
-			}
-		}).Start();
+		if (arguments == string.Empty) {
+			diffusionQueue.Enqueue(new GenerationRequest(GenerateAndSend, socketMessage));
+		}
+		else if (arguments == "?") {
+			HelpMessage();
+		}
+		else if (IsSubcommand(arguments, "p", out string prompt) || IsSubcommand(arguments, "prompt", out prompt)) {
+			diffusionQueue.Enqueue(new SetPromptRequest(stableDiffusionInterface.SetJsonValue, socketMessage, "prompt", prompt));
+		}
+		else if (IsSubcommand(arguments, "np", out prompt) || IsSubcommand(arguments, "negative prompt", out prompt)) {
+			diffusionQueue.Enqueue(new SetPromptRequest(stableDiffusionInterface.SetJsonValue, socketMessage, "negative_prompt", prompt));
+		}
+		else if (arguments != string.Empty) {
+			diffusionQueue.Enqueue(new SetPromptRequest(stableDiffusionInterface.SetJsonValue, socketMessage, "prompt", arguments));
+			diffusionQueue.Enqueue(new GenerationRequest(GenerateAndSend, socketMessage));
+		}
+		else {
+			throw new UnknownCommandException();
+		}
 	}
 
 	protected override void DefaultAction() {
-		string path = "result.png";
+		GenerateAndSend(socketMessage);
+	}
 
+	protected void GenerateAndSend(SocketMessage socketMessage) {
 		MessageReference messageReference = new MessageReference(socketMessage.Id, socketMessage.Channel.Id);
 
 		SendMessage("Generation started...", messageReference: messageReference);
@@ -223,11 +223,113 @@ public class StableDiffusionHandler : CommandHandler {
 				`"Немає аргументів"` - генерує зображення по раніше заданому промпту
 				`p "текст промпту"` або `prompt "текст промпту"` - встановлює промпт для генерації
 				`np "текст анти-промпту"` або `negative prompt "текст анти-промпту"` - встановлює анти-промпт для генерації
+				`"текст промпту"` - встановлює промпт та запускає генерацію
 			""");
 	}
 }
 
+public abstract class UserRequest { }
 
+public class GenerationRequest : UserRequest {
+	public delegate void Generation(SocketMessage socketMessage);
+
+	protected Generation generationMethod;
+	protected SocketMessage socketMessage;
+
+	public GenerationRequest(Generation generationMethod, SocketMessage socketMessage) {
+		this.generationMethod = generationMethod;
+		this.socketMessage = socketMessage;
+	}
+
+	public Generation GenerationMethod {
+		get => generationMethod;
+	}
+	public SocketMessage SocketMessage {
+		get => socketMessage;
+	}
+}
+
+public class SetPromptRequest : UserRequest {
+	public delegate void SetJsonValue(string property, string value);
+
+	protected SetJsonValue setJsonValueMethod;
+	protected SocketMessage socketMessage;
+	protected string property;
+	protected string value;
+
+	public SetPromptRequest(SetJsonValue setJsonValueMethod, SocketMessage socketMessage, string property, string value) {
+		this.setJsonValueMethod = setJsonValueMethod;
+		this.socketMessage = socketMessage;
+		this.property = property;
+		this.value = value;
+	}
+
+	public SetJsonValue SetJsonValueMethod {
+		get => setJsonValueMethod;
+	}
+	public SocketMessage SocketMessage {
+		get => socketMessage;
+	}
+	public string Property {
+		get => property;
+	}
+	public string Value {
+		get => value;
+	}
+}
+
+public class StableDiffusionQueue {
+	protected Queue<Task> queue = new();
+	protected object queueLocker = new();
+
+	public StableDiffusionQueue() { }
+
+	public void Enqueue(UserRequest request) {
+		Task? task = null;
+
+		if (request is GenerationRequest generation) {
+			task = new Task(() => {
+				StartAction(() => generation.GenerationMethod(generation.SocketMessage));
+			});
+		}
+		else if (request is SetPromptRequest promptRequest) {
+			task = new Task(() => {
+				StartAction(() => promptRequest.SetJsonValueMethod(promptRequest.Property, promptRequest.Value));
+			});
+		}
+
+		if (task == null)
+			return;
+
+		lock (queueLocker) {
+			queue.Enqueue(task);
+
+			if (queue.Count == 1) {
+				queue.Peek().Start();
+			}
+		}
+	}
+
+	protected void StartAction(Action action) {
+		try {
+			action();
+		}
+		//catch (Exception e) {
+
+		//}
+		finally {
+			DequeueAndStartNext();
+		}
+	}
+
+	protected void DequeueAndStartNext() {
+		lock (queueLocker) {
+			queue.Dequeue();
+			if (queue.Count > 0)
+				queue.Peek().Start();
+		}
+	}
+}
 
 public class IsNotCommandException : Exception {
 	public IsNotCommandException() : this("Is not command cxception") { }
