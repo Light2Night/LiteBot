@@ -1,9 +1,5 @@
-﻿using Discord.WebSocket;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Discord;
+using Discord.WebSocket;
 
 namespace CS_DiscordBot;
 
@@ -18,7 +14,7 @@ public interface ICommandHandler {
 
 public abstract class CommandHandler : ICommandHandler {
 	protected readonly string commandIdentifier;
-	protected SocketMessage socketMessage = null;
+	protected SocketMessage socketMessage = null!;
 
 	public CommandHandler(string commandIdentifier) {
 		this.commandIdentifier = commandIdentifier;
@@ -84,6 +80,10 @@ public abstract class CommandHandler : ICommandHandler {
 	protected void SendMessage(string text) {
 		socketMessage.Channel.SendMessageAsync(text);
 	}
+
+	protected void SendMessage(string text, MessageReference messageReference) {
+		socketMessage.Channel.SendMessageAsync(text, messageReference: messageReference);
+	}
 }
 
 
@@ -100,7 +100,7 @@ public abstract class CommandHandlerWithCommandList : CommandHandler {
 			DefaultAction();
 			return;
 		}
-		else if (arguments == "?") {
+		if (arguments == "?") {
 			HelpMessage();
 			return;
 		}
