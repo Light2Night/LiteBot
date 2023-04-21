@@ -183,39 +183,29 @@ public class StableDiffusionHandler : CommandHandler {
 
 	protected override void ExecuteCommand(string arguments) {
 		if (arguments == string.Empty) {
-			diffusionQueue.Enqueue(new GenerationRequest(GenerateAndSend, socketMessage));
+			diffusionQueue.Enqueue(new GenerationRequest(socketMessage, stableDiffusionInterface));
 		}
 		else if (arguments == "?") {
 			HelpMessage();
 		}
 		else if (IsSubcommand(arguments, "p", out string prompt) || IsSubcommand(arguments, "prompt", out prompt)) {
-			diffusionQueue.Enqueue(new SetPromptRequest(stableDiffusionInterface.SetJsonValue, socketMessage, "prompt", prompt));
+			diffusionQueue.Enqueue(new SetPromptRequest(socketMessage, stableDiffusionInterface, "prompt", prompt));
 		}
 		else if (IsSubcommand(arguments, "np", out prompt) || IsSubcommand(arguments, "negative prompt", out prompt)) {
-			diffusionQueue.Enqueue(new SetPromptRequest(stableDiffusionInterface.SetJsonValue, socketMessage, "negative_prompt", prompt));
+			diffusionQueue.Enqueue(new SetPromptRequest(socketMessage, stableDiffusionInterface, "negative_prompt", prompt));
 		}
 		else if (arguments != string.Empty) {
-			diffusionQueue.Enqueue(new SetPromptRequest(stableDiffusionInterface.SetJsonValue, socketMessage, "prompt", arguments));
-			diffusionQueue.Enqueue(new GenerationRequest(GenerateAndSend, socketMessage));
+			diffusionQueue.Enqueue(new SetPromptRequest(socketMessage, stableDiffusionInterface, "prompt", arguments));
+			diffusionQueue.Enqueue(new GenerationRequest(socketMessage, stableDiffusionInterface));
 		}
 		else {
 			throw new UnknownCommandException();
 		}
 	}
 
-	protected override void DefaultAction() {
-		GenerateAndSend(socketMessage);
-	}
-
-	protected void GenerateAndSend(SocketMessage socketMessage) {
-		MessageReference messageReference = new MessageReference(socketMessage.Id, socketMessage.Channel.Id);
-
-		SendMessage("Generation started...", messageReference: messageReference);
-
-		MemoryStream memoryStream = stableDiffusionInterface.GenerateImage();
-		socketMessage.Channel.SendFileAsync(memoryStream, "image.png", messageReference: messageReference);
-		memoryStream.Close();
-	}
+	//protected override void DefaultAction() {
+	//
+	//}
 
 	protected override void HelpMessage() {
 		SendMessage("""
@@ -228,53 +218,58 @@ public class StableDiffusionHandler : CommandHandler {
 	}
 }
 
-public abstract class UserRequest { }
-
-public class GenerationRequest : UserRequest {
-	public delegate void Generation(SocketMessage socketMessage);
-
-	protected Generation generationMethod;
+public abstract class UserRequest {
 	protected SocketMessage socketMessage;
 
-	public GenerationRequest(Generation generationMethod, SocketMessage socketMessage) {
-		this.generationMethod = generationMethod;
+	public UserRequest(SocketMessage socketMessage) {
 		this.socketMessage = socketMessage;
 	}
 
-	public Generation GenerationMethod {
-		get => generationMethod;
+	public abstract void Exucute();
+
+	protected void SendMessage(string text) {
+		socketMessage.Channel.SendMessageAsync(text);
 	}
-	public SocketMessage SocketMessage {
-		get => socketMessage;
+	protected void SendMessage(string text, MessageReference messageReference) {
+		socketMessage.Channel.SendMessageAsync(text, messageReference: messageReference);
+	}
+}
+
+public class GenerationRequest : UserRequest {
+	protected StableDiffusionApi stableDiffusionInterface;
+
+	public GenerationRequest(SocketMessage socketMessage, StableDiffusionApi stableDiffusionInterface) : base(socketMessage) {
+		this.stableDiffusionInterface = stableDiffusionInterface;
+	}
+
+	public override void Exucute() {
+		MessageReference messageReference = new MessageReference(socketMessage.Id, socketMessage.Channel.Id);
+
+		SendMessage("Generation started...", messageReference: messageReference);
+
+		using (MemoryStream memoryStream = stableDiffusionInterface.GenerateImage()) {
+			socketMessage.Channel.SendFileAsync(memoryStream, "image.png", messageReference: messageReference);
+		}
 	}
 }
 
 public class SetPromptRequest : UserRequest {
-	public delegate void SetJsonValue(string property, string value);
+	protected StableDiffusionApi stableDiffusionInterface;
 
-	protected SetJsonValue setJsonValueMethod;
-	protected SocketMessage socketMessage;
 	protected string property;
 	protected string value;
 
-	public SetPromptRequest(SetJsonValue setJsonValueMethod, SocketMessage socketMessage, string property, string value) {
-		this.setJsonValueMethod = setJsonValueMethod;
-		this.socketMessage = socketMessage;
+	public SetPromptRequest(SocketMessage socketMessage, StableDiffusionApi stableDiffusionInterface, string property, string value) : base(socketMessage) {
+		this.stableDiffusionInterface = stableDiffusionInterface;
 		this.property = property;
 		this.value = value;
 	}
 
-	public SetJsonValue SetJsonValueMethod {
-		get => setJsonValueMethod;
-	}
-	public SocketMessage SocketMessage {
-		get => socketMessage;
-	}
-	public string Property {
-		get => property;
-	}
-	public string Value {
-		get => value;
+	public override void Exucute() {
+		stableDiffusionInterface.SetJsonValue(property, value);
+
+		MessageReference messageReference = new MessageReference(socketMessage.Id, socketMessage.Channel.Id);
+		SendMessage($"A new property value is set to: {property}", messageReference);
 	}
 }
 
@@ -285,21 +280,7 @@ public class StableDiffusionQueue {
 	public StableDiffusionQueue() { }
 
 	public void Enqueue(UserRequest request) {
-		Task? task = null;
-
-		if (request is GenerationRequest generation) {
-			task = new Task(() => {
-				StartAction(() => generation.GenerationMethod(generation.SocketMessage));
-			});
-		}
-		else if (request is SetPromptRequest promptRequest) {
-			task = new Task(() => {
-				StartAction(() => promptRequest.SetJsonValueMethod(promptRequest.Property, promptRequest.Value));
-			});
-		}
-
-		if (task == null)
-			return;
+		Task task = new Task(() => ExecuteAction(request.Exucute));
 
 		lock (queueLocker) {
 			queue.Enqueue(task);
@@ -310,13 +291,13 @@ public class StableDiffusionQueue {
 		}
 	}
 
-	protected void StartAction(Action action) {
+	protected void ExecuteAction(Action action) {
 		try {
 			action();
 		}
-		//catch (Exception e) {
-
-		//}
+		catch (Exception e) {
+			//new EventHandler<Exception>(this, e);
+		}
 		finally {
 			DequeueAndStartNext();
 		}
