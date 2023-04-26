@@ -1,4 +1,6 @@
-﻿namespace CS_DiscordBot.CommandHandlers;
+﻿using DiscordBot.CommandHandlersBase;
+
+namespace DiscordBot.CommandHandlers;
 
 public class HelloHandler : CommandHandler {
 	public HelloHandler(string commandIdentifier) : base(commandIdentifier) { }

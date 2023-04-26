@@ -1,7 +1,8 @@
 ﻿using ArtApp.Web;
-using CS_DiscordBot.Exceptions;
+using DiscordBot.CommandHandlersBase;
+using DiscordBot.Exceptions;
 
-namespace CS_DiscordBot.CommandHandlers;
+namespace DiscordBot.CommandHandlers;
 
 public class ArtHandler : CommandHandler {
 	public ArtHandler(string commandIdentifier) : base(commandIdentifier) { }

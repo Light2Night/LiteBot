@@ -1,4 +1,4 @@
-﻿namespace CS_DiscordBot.Exceptions;
+﻿namespace DiscordBot.Exceptions;
 
 public class IsNotCommandException : Exception
 {

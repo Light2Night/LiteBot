@@ -1,4 +1,6 @@
-﻿namespace CS_DiscordBot.CommandHandlers;
+﻿using DiscordBot.CommandHandlersBase;
+
+namespace DiscordBot.CommandHandlers;
 
 public class TimeHandler : CommandHandler {
 	public TimeHandler(string commandIdentifier) : base(commandIdentifier) { }

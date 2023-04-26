@@ -1,4 +1,4 @@
-﻿namespace CS_DiscordBot {
+﻿namespace DiscordBot {
 	public static class TypeChecker {
 		public static bool IsUInt32<T>(T number) {
 			try {

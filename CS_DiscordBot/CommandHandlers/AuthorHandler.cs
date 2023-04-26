@@ -1,4 +1,6 @@
-﻿namespace CS_DiscordBot.CommandHandlers;
+﻿using DiscordBot.CommandHandlersBase;
+
+namespace DiscordBot.CommandHandlers;
 
 public class AuthorHandler : CommandHandler {
 	public AuthorHandler(string commandIdentifier) : base(commandIdentifier) { }

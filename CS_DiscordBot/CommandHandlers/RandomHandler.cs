@@ -1,5 +1,7 @@
-﻿namespace CS_DiscordBot.CommandHandlers;
-using CS_DiscordBot.Exceptions;
+﻿namespace DiscordBot.CommandHandlers;
+
+using DiscordBot.CommandHandlersBase;
+using DiscordBot.Exceptions;
 
 public class RandomHandler : CommandHandler {
 	protected Random random = new Random(DateTime.Now.Millisecond);

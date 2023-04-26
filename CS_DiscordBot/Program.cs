@@ -1,9 +1,11 @@
-﻿using CS_DiscordBot.Exceptions;
-using Discord;
+﻿using Discord;
 using Discord.WebSocket;
-using CS_DiscordBot.CommandHandlers;
 
-namespace CS_DiscordBot;
+using DiscordBot.CommandHandlersBase;
+using DiscordBot.CommandHandlers;
+using DiscordBot.Exceptions;
+
+namespace DiscordBot;
 internal class Program {
 	protected DiscordSocketClient client = null!;
 	protected static Random random = new Random(DateTime.Now.Millisecond);

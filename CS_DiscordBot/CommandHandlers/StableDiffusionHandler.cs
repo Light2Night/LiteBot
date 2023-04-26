@@ -1,7 +1,10 @@
-﻿using Discord;
-using CS_DiscordBot.Exceptions;
+﻿using DiscordBot.CommandHandlersBase;
+using DiscordBot.StableDiffusion;
+using Discord;
+using DiscordBot.Exceptions;
+using DiscordBot.StableDiffusionUserRequests;
 
-namespace CS_DiscordBot.CommandHandlers;
+namespace DiscordBot.CommandHandlers;
 
 public class StableDiffusionHandler : CommandHandler {
 	protected StableDiffusionApi stableDiffusionInterface = new();
