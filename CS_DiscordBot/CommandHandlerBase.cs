@@ -1,4 +1,5 @@
-﻿using Discord;
+﻿using CS_DiscordBot.Exceptions;
+using Discord;
 using Discord.WebSocket;
 
 namespace CS_DiscordBot;

@@ -1,5 +1,7 @@
-﻿using Discord;
+﻿using CS_DiscordBot.Exceptions;
+using Discord;
 using Discord.WebSocket;
+using CS_DiscordBot.CommandHandlers;
 
 namespace CS_DiscordBot;
 internal class Program {

@@ -10,7 +10,7 @@ namespace CS_DiscordBot;
 public class StableDiffusionApi {
 	protected string sdJsonPath = "sd.txt";
 	protected object jsonLocker = new();
-
+	protected string defaultSdJsonPath = "sd_default.json";
 
 	public StableDiffusionApi() {
 
@@ -54,14 +54,20 @@ public class StableDiffusionApi {
 		}
 	}
 
-	public void SetJsonValue(string property, string value) {
+	public void SetJsonValue(string property, object value) {
 		JObject? obj = JsonConvert.DeserializeObject<JObject>(File.ReadAllText(sdJsonPath));
 		if (obj == null)
 			return;
 
-		obj[property] = value;
+		obj[property] = JToken.FromObject(value);
 		lock (jsonLocker) {
 			File.WriteAllText(sdJsonPath, JsonConvert.SerializeObject(obj));
+		}
+	}
+
+	public void SetDefaultJson() {
+		lock (jsonLocker) {
+			File.WriteAllText(sdJsonPath, File.ReadAllText(defaultSdJsonPath));
 		}
 	}
 }
