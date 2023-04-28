@@ -19,14 +19,8 @@ public class StableDiffusionHandler : CommandHandler {
 		else if (arguments == "?") {
 			HelpMessage();
 		}
-		else if (arguments == "p") {
-			diffusionQueue.Enqueue(new SetPropertyRequest(socketMessage, stableDiffusionInterface, "prompt", ""));
-		}
 		else if (IsSubcommand(arguments, "p", out string value) || IsSubcommand(arguments, "prompt", out value)) {
 			diffusionQueue.Enqueue(new SetPropertyRequest(socketMessage, stableDiffusionInterface, "prompt", value));
-		}
-		else if (arguments == "np") {
-			diffusionQueue.Enqueue(new SetPropertyRequest(socketMessage, stableDiffusionInterface, "negative_prompt", ""));
 		}
 		else if (IsSubcommand(arguments, "np", out value) || IsSubcommand(arguments, "negative prompt", out value)) {
 			diffusionQueue.Enqueue(new SetPropertyRequest(socketMessage, stableDiffusionInterface, "negative_prompt", value));
