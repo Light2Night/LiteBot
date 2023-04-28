@@ -17,24 +17,27 @@ public class GenerationRequest : UserRequest {
 
 		RestUserMessage restUserMessage = SendMessage("Generation started...", messageReference: messageReference);
 
-		List<MemoryStream> imagesList = stableDiffusionInterface.GenerateImage();
+		try {
+			List<MemoryStream> imagesList = stableDiffusionInterface.GenerateImage();
 
-		List<FileAttachment> attachments = new List<FileAttachment>();
-		foreach (MemoryStream stream in imagesList) {
-			attachments.Add(new FileAttachment(stream, "image.png"));
+			List<FileAttachment> attachments = new List<FileAttachment>();
+			foreach (MemoryStream stream in imagesList) {
+				attachments.Add(new FileAttachment(stream, "image.png"));
+			}
+
+			//ComponentBuilder builder = new ComponentBuilder()
+			//	.WithButton("1", "sd 1")
+			//	.WithButton("2", "sd 2");
+
+			socketMessage.Channel.SendFilesAsync(attachments, messageReference: messageReference/*, components: builder.Build()*/).Wait();
+
+			foreach (MemoryStream stream in imagesList) {
+				stream.Dispose();
+			}
 		}
-
-		//var builder = new ComponentBuilder()
-		//	.WithButton("button 1", "custom-id")
-		//	.WithButton("button 2", "custom-id2");
-
-		socketMessage.Channel.SendFilesAsync(attachments, messageReference: messageReference/*, components: builder.Build()*/).Wait();
-
-		foreach (MemoryStream stream in imagesList) {
-			stream.Dispose();
+		finally {
+			//restUserMessage.ModifyAsync((a) => a.Content = "a");
+			restUserMessage.DeleteAsync();
 		}
-
-		//restUserMessage.ModifyAsync((a) => a.Content = "a");
-		restUserMessage.DeleteAsync();
 	}
 }

@@ -26,7 +26,6 @@ public abstract class CommandHandler : ICommandHandler {
 
 	protected void HandleCommand(string command) {
 		//Console.WriteLine($"Обробка команди {command}");
-		//command = command.Trim();
 
 		if (!IsCommand(command, out string argumentsText)) {
 			throw new IsNotCommandException();
@@ -63,8 +62,8 @@ public abstract class CommandHandler : ICommandHandler {
 
 	public bool IsSubcommand(string messageText, string commandIdentifier) =>
 		IsCommandBase(messageText, commandIdentifier, " ");
-	public bool IsSubcommand(string messageText, string commandIdentifier, out string commandText)
-		=> IsCommandBase(messageText, commandIdentifier, " ", out commandText);
+	public bool IsSubcommand(string messageText, string commandIdentifier, out string commandText) =>
+		IsCommandBase(messageText, commandIdentifier, " ", out commandText);
 
 	private bool IsCommandBase(string messageText, string commandIdentifier, string separator) {
 		return messageText.ToLower().StartsWith(commandIdentifier + separator);

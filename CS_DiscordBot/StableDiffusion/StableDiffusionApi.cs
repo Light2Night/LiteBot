@@ -18,6 +18,7 @@ public class StableDiffusionApi {
 
 	public List<MemoryStream> GenerateImage() {
 		HttpWebRequest request = (HttpWebRequest)WebRequest.Create("http://127.0.0.1:7860/sdapi/v1/txt2img");
+		request.Timeout = 300 * 1000; // Timeout.Infinite
 		request.Method = "POST";
 		request.ContentType = "application/json";
 

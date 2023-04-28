@@ -4,7 +4,6 @@ using Discord.WebSocket;
 using DiscordBot.CommandHandlersBase;
 using DiscordBot.CommandHandlers;
 using DiscordBot.Exceptions;
-using Microsoft.VisualBasic;
 
 namespace DiscordBot;
 internal class Program {
@@ -36,25 +35,14 @@ internal class Program {
 		);
 
 		client.MessageReceived += CommandsHandler;
+		client.ButtonExecuted += ButtonHandler;
 		client.Log += Log;
-		//client.ButtonExecuted += Client_ButtonExecuted;
 		client.Ready += () => {
 			Console.WriteLine("Bot is ready to use!");
 			return Task.CompletedTask;
 		};
-		client.MessageUpdated += MessageUpdated;
+		//client.MessageUpdated += MessageUpdated;
 	}
-
-	//private async Task Client_ButtonExecuted(SocketMessageComponent arg) {
-	//	if (arg.Data.CustomId == "custom-id") {
-	//		await arg.Channel.SendMessageAsync("b1");
-	//	}
-	//	else if (arg.Data.CustomId == "custom-id2") {
-	//		await arg.Channel.SendMessageAsync("b2", messageReference: new MessageReference(arg.Message.Id, arg.Message.Channel.Id));
-	//	}
-	//
-	//	await arg.RespondAsync();
-	//}
 
 	private Task CommandsHandler(SocketMessage message) {
 		if (!(message.Channel.Id == 1003685097377116181 || message.Channel.Id == 906446658299117608 || message.Channel.Id == 1098194649895669801))
@@ -63,6 +51,17 @@ internal class Program {
 		HandleMessage(message);
 
 		return Task.CompletedTask;
+	}
+
+	private async Task ButtonHandler(SocketMessageComponent arg) {
+		if (arg.Data.CustomId == "sd 1") {
+			await arg.Channel.SendMessageAsync("b1");
+		}
+		else if (arg.Data.CustomId == "sd 2") {
+			await arg.Channel.SendMessageAsync("b2", messageReference: new MessageReference(arg.Message.Id, arg.Message.Channel.Id));
+		}
+
+		await arg.RespondAsync("Click handled");
 	}
 
 	private Task Log(LogMessage msg) {

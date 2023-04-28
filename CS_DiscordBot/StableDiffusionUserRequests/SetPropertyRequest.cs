@@ -20,6 +20,6 @@ public class SetPropertyRequest : UserRequest {
 		stableDiffusionInterface.SetJsonValue(property, value);
 
 		MessageReference messageReference = new MessageReference(socketMessage.Id, socketMessage.Channel.Id);
-		SendMessage($"A new property value is set to: {property}", messageReference);
+		SendMessage($"A new property value set to: {property}", messageReference);
 	}
 }
