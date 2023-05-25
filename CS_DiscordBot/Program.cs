@@ -8,9 +8,14 @@ using DiscordBot.Exceptions;
 namespace DiscordBot;
 internal class Program {
 	protected DiscordSocketClient client = null!;
-	protected static Random random = new Random(DateTime.Now.Millisecond);
 	protected const string commandIdentifier = "=";
 	protected ICommandHandler commandHandler = new BotCommandHandler(commandIdentifier);
+
+	protected List<ulong> channelsWhiteList = new() {
+		906446658299117608, // бот
+		1098194649895669801, // бот генератор
+		1003685097377116181 // флуд-нсфв
+	};
 
 	private static Task Main(string[] args) => new Program().MainAsync();
 
@@ -34,26 +39,24 @@ internal class Program {
 			}
 		);
 
-		client.MessageReceived += CommandsHandler;
-		client.ButtonExecuted += ButtonHandler;
-		client.Log += Log;
+		client.MessageReceived += CommandsHandlerAsync;
+		client.ButtonExecuted += ButtonHandlerAsync;
+		client.Log += LogAsync;
 		client.Ready += () => {
 			Console.WriteLine("Bot is ready to use!");
 			return Task.CompletedTask;
 		};
-		//client.MessageUpdated += MessageUpdated;
+		//client.MessageUpdatedAsync += MessageUpdatedAsync;
 	}
 
-	private Task CommandsHandler(SocketMessage message) {
-		if (!(message.Channel.Id == 1003685097377116181 || message.Channel.Id == 906446658299117608 || message.Channel.Id == 1098194649895669801))
-			return Task.CompletedTask;
+	private async Task CommandsHandlerAsync(SocketMessage message) {
+		if (!channelsWhiteList.Contains(message.Channel.Id))
+			return;
 
-		HandleMessage(message);
-
-		return Task.CompletedTask;
+		await Task.Run(() => HandleMessage(message));
 	}
 
-	private async Task ButtonHandler(SocketMessageComponent arg) {
+	private async Task ButtonHandlerAsync(SocketMessageComponent arg) {
 		if (arg.Data.CustomId == "sd 1") {
 			await arg.Channel.SendMessageAsync("b1");
 		}
@@ -64,12 +67,11 @@ internal class Program {
 		await arg.RespondAsync("Click handled");
 	}
 
-	private Task Log(LogMessage msg) {
-		Console.WriteLine(msg.ToString());
-		return Task.CompletedTask;
+	private async Task LogAsync(LogMessage msg) {
+		await Task.Run(() => Console.WriteLine(msg.ToString()));
 	}
 
-	private async Task MessageUpdated(Cacheable<IMessage, ulong> before, SocketMessage after, ISocketMessageChannel channel) {
+	private async Task MessageUpdatedAsync(Cacheable<IMessage, ulong> before, SocketMessage after, ISocketMessageChannel channel) {
 		// If the message was not in the cache, downloading it will result in getting a copy of `after`.
 		var message = await before.GetOrDownloadAsync();
 		Console.WriteLine($"{message} -> {after}");
@@ -78,16 +80,16 @@ internal class Program {
 
 
 	protected void PrintMessageInfo(SocketMessage message) {
-		Console.WriteLine(
-			$"Channel: {message.Channel}\n" +
-			$"Author: {message.Author}\n" +
-			$"Id: {message.Id}\n" +
-			$"EditedTimestamp: {message.EditedTimestamp}\n" +
-			$"CreatedAt: {message.CreatedAt}\n" +
-			$"Application {message.Application}\n" +
-			$"CleanContent: {message.CleanContent}\n" +
-			$"Content: {message.Content}\n"
-		);
+		Console.WriteLine($"""
+			Channel: {message.Channel}
+			Author: {message.Author}
+			Id: {message.Id}
+			EditedTimestamp: {message.EditedTimestamp}
+			CreatedAt: {message.CreatedAt}
+			CleanContent: {message.CleanContent}
+			Content: {message.Content}
+
+			""");
 	}
 
 	protected void HandleMessage(SocketMessage message) {

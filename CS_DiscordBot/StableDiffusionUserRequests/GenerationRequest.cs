@@ -19,25 +19,20 @@ public class GenerationRequest : UserRequest {
 
 		try {
 			List<MemoryStream> imagesList = stableDiffusionInterface.GenerateImage();
-
-			List<FileAttachment> attachments = new List<FileAttachment>();
-			foreach (MemoryStream stream in imagesList) {
-				attachments.Add(new FileAttachment(stream, "image.png"));
-			}
-
 			//ComponentBuilder builder = new ComponentBuilder()
 			//	.WithButton("1", "sd 1")
 			//	.WithButton("2", "sd 2");
 
-			socketMessage.Channel.SendFilesAsync(attachments, messageReference: messageReference/*, components: builder.Build()*/).Wait();
+			socketMessage.Channel.SendFilesAsync(ImagesToAttachments(imagesList), messageReference: messageReference/*, components: builder.Build()*/).Wait();
 
-			foreach (MemoryStream stream in imagesList) {
-				stream.Dispose();
-			}
+			imagesList.ForEach(image => image.Dispose());
 		}
 		finally {
-			//restUserMessage.ModifyAsync((a) => a.Content = "a");
 			restUserMessage.DeleteAsync();
 		}
+	}
+
+	protected IEnumerable<FileAttachment> ImagesToAttachments(IEnumerable<MemoryStream> images) {
+		return images.Select(stream => new FileAttachment(stream, "image.png"));
 	}
 }

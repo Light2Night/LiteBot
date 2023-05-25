@@ -65,6 +65,8 @@ public class StableDiffusionHandler : CommandHandler {
 		else {
 			throw new UnknownCommandException();
 		}
+
+		socketMessage.AddReactionAsync(new Emoji("✅"));
 	}
 
 	//protected override void DefaultAction() {
@@ -74,7 +76,7 @@ public class StableDiffusionHandler : CommandHandler {
 	protected override void HelpMessage() {
 		SendMessage("""
 			Доступні команди:
-				`"Немає аргументів"` - генерує зображення по раніше заданому промпту
+				`"Немає аргументів"` - генерує зображення по раніше заданим параметрах
 				`"текст промпту"` - встановлює промпт та запускає генерацію
 				`p "текст промпту"` або `prompt "текст промпту"` - встановлює промпт для генерації
 				`np "текст анти-промпту"` або `negative prompt "текст анти-промпту"` - встановлює анти-промпт для генерації
