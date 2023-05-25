@@ -8,32 +8,21 @@ using Newtonsoft.Json.Linq;
 namespace DiscordBot.StableDiffusion;
 
 public class StableDiffusionApi {
-	protected string sdJsonPath = "sd.txt";
-	protected object jsonLocker = new();
-	protected string defaultSdJsonPath = "sd_default.json";
+	public StableDiffusionApi() { }
 
-	public StableDiffusionApi() {
-
-	}
-
-	public List<MemoryStream> GenerateImage() {
+	public async Task<List<MemoryStream>> GenerateImage(string postData) {
 		HttpWebRequest request = (HttpWebRequest)WebRequest.Create("http://127.0.0.1:7860/sdapi/v1/txt2img");
-		request.Timeout = 300 * 1000; // Timeout.Infinite
+		request.Timeout = 1_200_000; // Timeout.Infinite
 		request.Method = "POST";
 		request.ContentType = "application/json";
 
-		string postData;
-		lock (jsonLocker) {
-			postData = File.ReadAllText(sdJsonPath);
-		}
-
 		byte[] data = Encoding.UTF8.GetBytes(postData);
 		request.ContentLength = data.Length;
-		using (Stream stream = request.GetRequestStream()) {
+		using (Stream stream = await request.GetRequestStreamAsync()) {
 			stream.Write(data, 0, data.Length);
 		}
 
-		using (HttpWebResponse response = (HttpWebResponse)request.GetResponse()) {
+		using (HttpWebResponse response = (HttpWebResponse)await request.GetResponseAsync()) {
 			string jsonText;
 			using (Stream responseStream = response.GetResponseStream())
 			using (StreamReader reader = new StreamReader(responseStream)) {
@@ -56,20 +45,26 @@ public class StableDiffusionApi {
 		}
 	}
 
-	public void SetJsonValue(string property, object value) {
-		JObject? obj = JsonConvert.DeserializeObject<JObject>(File.ReadAllText(sdJsonPath));
-		if (obj == null)
-			return;
+	public async Task<MemoryStream?> GetProgress() {
+		string url = "http://127.0.0.1:7860/sdapi/v1/progress";
 
-		obj[property] = JToken.FromObject(value);
-		lock (jsonLocker) {
-			File.WriteAllText(sdJsonPath, JsonConvert.SerializeObject(obj));
-		}
-	}
+		using (HttpClient client = new HttpClient()) {
+			HttpResponseMessage response = await client.GetAsync(url);
 
-	public void SetDefaultJson() {
-		lock (jsonLocker) {
-			File.WriteAllText(sdJsonPath, File.ReadAllText(defaultSdJsonPath));
+			if (!response.IsSuccessStatusCode)
+				return null;
+
+			string responseContent = await response.Content.ReadAsStringAsync();
+
+			JsonElement image = System.Text.Json.JsonSerializer.Deserialize<JsonElement>(responseContent)
+				.GetProperty("current_image");
+
+			string result = image.GetString() ?? "null";
+
+			if (result == "null")
+				return null;
+
+			return new MemoryStream(Convert.FromBase64String(result));
 		}
 	}
 }

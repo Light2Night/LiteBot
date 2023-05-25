@@ -2,34 +2,49 @@
 using Discord.WebSocket;
 using Discord.Rest;
 using DiscordBot.StableDiffusion;
+using DiscordBot.CommandHandlers;
 
 namespace DiscordBot.StableDiffusionUserRequests;
 
 public class GenerationRequest : UserRequest {
-	protected StableDiffusionApi stableDiffusionInterface;
+	protected Pair pair;
 
-	public GenerationRequest(SocketMessage socketMessage, StableDiffusionApi stableDiffusionInterface) : base(socketMessage) {
-		this.stableDiffusionInterface = stableDiffusionInterface;
+	public GenerationRequest(SocketMessage socketMessage, Pair pair) : base(socketMessage) {
+		this.pair = pair;
 	}
 
 	public override void Exucute() {
 		MessageReference messageReference = new MessageReference(socketMessage.Id, socketMessage.Channel.Id);
-
 		RestUserMessage restUserMessage = SendMessage("Generation started...", messageReference: messageReference);
+		StableDiffusionApi sdApi = pair.StableDiffusionApi;
 
-		try {
-			List<MemoryStream> imagesList = stableDiffusionInterface.GenerateImage();
-			//ComponentBuilder builder = new ComponentBuilder()
-			//	.WithButton("1", "sd 1")
-			//	.WithButton("2", "sd 2");
+		string properties = pair.PropertyAccessor.GetProperies(socketMessage.Author.Id);
+		Task<List<MemoryStream>> imageGenerationTask = sdApi.GenerateImage(properties);
+		//ComponentBuilder builder = new ComponentBuilder()
+		//	.WithButton("1", "sd 1")
+		//	.WithButton("2", "sd 2");
 
-			socketMessage.Channel.SendFilesAsync(ImagesToAttachments(imagesList), messageReference: messageReference/*, components: builder.Build()*/).Wait();
+		while (!imageGenerationTask.IsCompleted) {
+			Thread.Sleep(5000);
 
-			imagesList.ForEach(image => image.Dispose());
+			using MemoryStream? image = sdApi.GetProgress().Result;
+			if (image == null)
+				continue;
+
+			restUserMessage.ModifyAsync(m => {
+				m.Attachments = new List<FileAttachment> { new FileAttachment(image, "image.png") };
+				m.Content = "";
+			}).Wait();
 		}
-		finally {
-			restUserMessage.DeleteAsync();
-		}
+
+		List<MemoryStream> imagesList = imageGenerationTask.Result;
+		restUserMessage.ModifyAsync(m => {
+			m.Attachments = ImagesToAttachments(imagesList).ToList();
+			m.Content = "";
+			//m.Components = builder.Build();
+		}).Wait();
+
+		imagesList.ForEach(image => image.Dispose());
 	}
 
 	protected IEnumerable<FileAttachment> ImagesToAttachments(IEnumerable<MemoryStream> images) {

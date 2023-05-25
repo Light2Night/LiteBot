@@ -3,27 +3,30 @@ using DiscordBot.StableDiffusion;
 using Discord;
 using DiscordBot.Exceptions;
 using DiscordBot.StableDiffusionUserRequests;
+using Newtonsoft.Json.Linq;
+using Newtonsoft.Json;
 
 namespace DiscordBot.CommandHandlers;
 
 public class StableDiffusionHandler : CommandHandler {
-	protected StableDiffusionApi stableDiffusionInterface = new();
+	protected StableDiffusionApi stableDiffusionApi = new();
 	protected StableDiffusionQueue diffusionQueue = new();
+	protected PropertyAccessor propertyAccessor = new();
 
 	public StableDiffusionHandler(string commandIdentifier) : base(commandIdentifier) { }
 
 	protected override void ExecuteCommand(string arguments) {
 		if (arguments == string.Empty) {
-			diffusionQueue.Enqueue(new GenerationRequest(socketMessage, stableDiffusionInterface));
+			diffusionQueue.Enqueue(new GenerationRequest(socketMessage, new Pair(stableDiffusionApi, propertyAccessor)));
 		}
 		else if (arguments == "?") {
 			HelpMessage();
 		}
 		else if (IsSubcommand(arguments, "p", out string value) || IsSubcommand(arguments, "prompt", out value)) {
-			diffusionQueue.Enqueue(new SetPropertyRequest(socketMessage, stableDiffusionInterface, "prompt", value));
+			diffusionQueue.Enqueue(new SetPropertyRequest(socketMessage, propertyAccessor, "prompt", value));
 		}
 		else if (IsSubcommand(arguments, "np", out value) || IsSubcommand(arguments, "negative prompt", out value)) {
-			diffusionQueue.Enqueue(new SetPropertyRequest(socketMessage, stableDiffusionInterface, "negative_prompt", value));
+			diffusionQueue.Enqueue(new SetPropertyRequest(socketMessage, propertyAccessor, "negative_prompt", value));
 		}
 		else if (IsSubcommand(arguments, "s", out value) || IsSubcommand(arguments, "steps", out value)) {
 			if (!TypeChecker.IsUInt32(value)) {
@@ -38,7 +41,7 @@ public class StableDiffusionHandler : CommandHandler {
 				return;
 			}
 
-			diffusionQueue.Enqueue(new SetPropertyRequest(socketMessage, stableDiffusionInterface, "steps", steps));
+			diffusionQueue.Enqueue(new SetPropertyRequest(socketMessage, propertyAccessor, "steps", steps));
 		}
 		else if (IsSubcommand(arguments, "cfg", out value)) {
 			if (!TypeChecker.IsUInt32(value)) {
@@ -53,14 +56,14 @@ public class StableDiffusionHandler : CommandHandler {
 				return;
 			}
 
-			diffusionQueue.Enqueue(new SetPropertyRequest(socketMessage, stableDiffusionInterface, "cfg_scale", cfgScale));
+			diffusionQueue.Enqueue(new SetPropertyRequest(socketMessage, propertyAccessor, "cfg_scale", cfgScale));
 		}
 		else if (arguments == "default") {
-			diffusionQueue.Enqueue(new ResetPropertyRequest(socketMessage, stableDiffusionInterface));
+			diffusionQueue.Enqueue(new ResetPropertyRequest(socketMessage, propertyAccessor));
 		}
 		else if (arguments != string.Empty) {
-			diffusionQueue.Enqueue(new SetPropertyRequest(socketMessage, stableDiffusionInterface, "prompt", arguments));
-			diffusionQueue.Enqueue(new GenerationRequest(socketMessage, stableDiffusionInterface));
+			diffusionQueue.Enqueue(new SetPropertyRequest(socketMessage, propertyAccessor, "prompt", arguments));
+			diffusionQueue.Enqueue(new GenerationRequest(socketMessage, new Pair(stableDiffusionApi, propertyAccessor)));
 		}
 		else {
 			throw new UnknownCommandException();
@@ -84,5 +87,58 @@ public class StableDiffusionHandler : CommandHandler {
 				`cfg "число"` - встановлює значення властивості cfg_scale. Вона вплиає на силу дії промптів та анти-промптів. Стандартне значення 7
 				`default` - встановлює стандартне значення властивостей
 			""");
+	}
+}
+
+public record Pair(StableDiffusionApi StableDiffusionApi, PropertyAccessor PropertyAccessor);
+
+public class PropertyAccessor {
+	protected string folderPath = "Users properties";
+	protected object jsonLocker = new();
+
+	public PropertyAccessor() {
+		if (!Directory.Exists(folderPath))
+			Directory.CreateDirectory(folderPath);
+	}
+
+	public string GetProperies(ulong authorId) {
+		string filePath = GetPathToFile(authorId);
+
+		lock (jsonLocker) {
+			if (!File.Exists(filePath))
+				filePath = GetDefaultPath();
+
+			return File.ReadAllText(filePath);
+		}
+	}
+
+	public void SetProperty(ulong authorId, string property, object value) {
+		string filePath = GetPathToFile(authorId);
+
+		if (!File.Exists(filePath))
+			SetDefaultValues(authorId);
+
+		JObject? obj = JsonConvert.DeserializeObject<JObject>(File.ReadAllText(filePath));
+		if (obj is null)
+			throw new NullReferenceException("PropertyAccessor.SetProperty JObject? obj");
+
+		obj[property] = JToken.FromObject(value);
+
+		lock (jsonLocker) {
+			File.WriteAllText(filePath, JsonConvert.SerializeObject(obj));
+		}
+	}
+
+	public void SetDefaultValues(ulong authorId) {
+		lock (jsonLocker) {
+			File.WriteAllText(GetPathToFile(authorId), File.ReadAllText(GetDefaultPath()));
+		}
+	}
+
+	protected string GetPathToFile(ulong authorId) {
+		return $"{folderPath}\\{authorId}.json";
+	}
+	protected string GetDefaultPath() {
+		return $"{folderPath}\\default.json";
 	}
 }
