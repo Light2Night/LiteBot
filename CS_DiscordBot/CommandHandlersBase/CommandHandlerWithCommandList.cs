@@ -1,6 +1,6 @@
-﻿using DiscordBot.Exceptions;
+﻿using LiteBot.Exceptions;
 
-namespace DiscordBot.CommandHandlersBase;
+namespace LiteBot.CommandHandlersBase;
 
 public abstract class CommandHandlerWithCommandList : CommandHandler {
 	protected List<CommandHandler> commandHandlers;

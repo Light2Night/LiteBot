@@ -1,8 +1,8 @@
-﻿using DiscordBot.Exceptions;
+﻿using LiteBot.Exceptions;
 using Discord;
 using Discord.WebSocket;
 
-namespace DiscordBot.CommandHandlersBase;
+namespace LiteBot.CommandHandlersBase;
 
 public abstract class CommandHandler : ICommandHandler {
 	protected readonly string commandIdentifier;

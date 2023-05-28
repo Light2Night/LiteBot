@@ -1,10 +1,12 @@
-﻿using DiscordBot.StableDiffusionUserRequests;
+﻿using LiteBot.StableDiffusion.UserRequests;
 
-namespace DiscordBot.StableDiffusion;
+namespace LiteBot.StableDiffusion;
 
 public class StableDiffusionQueue {
 	protected Queue<Task> queue = new();
 	protected object queueLocker = new();
+
+	public event EventHandler<Exception>? ExceptionCatched;
 
 	public StableDiffusionQueue() { }
 
@@ -24,8 +26,8 @@ public class StableDiffusionQueue {
 		try {
 			action();
 		}
-		catch (Exception e) {
-			//new EventHandler<Exception>(this, e);
+		catch (Exception ex) {
+			ExceptionCatched?.Invoke(this, ex);
 		}
 		finally {
 			DequeueAndStartNext();

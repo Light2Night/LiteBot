@@ -1,6 +1,6 @@
-﻿using DiscordBot.CommandHandlersBase;
+﻿using LiteBot.CommandHandlersBase;
 
-namespace DiscordBot.CommandHandlers;
+namespace LiteBot.CommandHandlers;
 
 public class AuthorHandler : CommandHandler {
 	public AuthorHandler(string commandIdentifier) : base(commandIdentifier) { }

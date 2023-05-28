@@ -2,7 +2,7 @@
 using Discord.WebSocket;
 using Discord.Rest;
 
-namespace DiscordBot.StableDiffusionUserRequests;
+namespace LiteBot.StableDiffusion.UserRequests;
 
 public abstract class UserRequest {
 	protected SocketMessage socketMessage;

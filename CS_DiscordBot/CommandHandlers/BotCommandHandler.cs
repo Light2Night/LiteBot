@@ -1,6 +1,6 @@
-﻿using DiscordBot.CommandHandlersBase;
+﻿using LiteBot.CommandHandlersBase;
 
-namespace DiscordBot.CommandHandlers;
+namespace LiteBot.CommandHandlers;
 
 public class BotCommandHandler : CommandHandlerWithCommandList {
 	public BotCommandHandler(string commandIdentifier) : base(

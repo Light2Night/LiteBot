@@ -1,4 +1,4 @@
-﻿namespace DiscordBot.Exceptions;
+﻿namespace LiteBot.Exceptions;
 
 public class IsNotCommandException : Exception
 {

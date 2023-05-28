@@ -1,4 +1,4 @@
-﻿namespace DiscordBot {
+﻿namespace LiteBot {
 	public static class TypeChecker {
 		public static bool IsUInt32<T>(T number) {
 			try {

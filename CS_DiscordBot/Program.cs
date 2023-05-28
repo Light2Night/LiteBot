@@ -1,11 +1,11 @@
 ﻿using Discord;
 using Discord.WebSocket;
 
-using DiscordBot.CommandHandlersBase;
-using DiscordBot.CommandHandlers;
-using DiscordBot.Exceptions;
+using LiteBot.CommandHandlersBase;
+using LiteBot.CommandHandlers;
+using LiteBot.Exceptions;
 
-namespace DiscordBot;
+namespace LiteBot;
 internal class Program {
 	protected DiscordSocketClient client = null!;
 	protected const string commandIdentifier = "=";

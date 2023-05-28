@@ -2,16 +2,14 @@
 using System.Text.Json;
 using System.Text;
 
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-
-namespace DiscordBot.StableDiffusion;
+namespace LiteBot.StableDiffusion;
 
 public class StableDiffusionApi {
+	private string url = "http://127.0.0.1:7860/sdapi/v1/";
 	public StableDiffusionApi() { }
 
-	public async Task<List<MemoryStream>> GenerateImage(string postData) {
-		HttpWebRequest request = (HttpWebRequest)WebRequest.Create("http://127.0.0.1:7860/sdapi/v1/txt2img");
+	public async Task<IEnumerable<MemoryStream>> GenerateImages(string postData) {
+		HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url + "txt2img");
 		request.Timeout = 1_200_000; // Timeout.Infinite
 		request.Method = "POST";
 		request.ContentType = "application/json";
@@ -23,48 +21,54 @@ public class StableDiffusionApi {
 		}
 
 		using (HttpWebResponse response = (HttpWebResponse)await request.GetResponseAsync()) {
-			string jsonText;
-			using (Stream responseStream = response.GetResponseStream())
-			using (StreamReader reader = new StreamReader(responseStream)) {
-				jsonText = reader.ReadToEnd();
-			}
+			JsonElement images = JsonSerializer
+				.Deserialize<JsonElement>(await GetJsonFromHttpWebResponseAsync(response))
+				.GetProperty("images");
 
-			JsonElement json = System.Text.Json.JsonSerializer.Deserialize<JsonElement>(jsonText);
-
-			JsonElement images = json.GetProperty("images");
-
-			List<MemoryStream> imagesList = new List<MemoryStream>();
-			foreach (JsonElement item in images.EnumerateArray().ToArray()) {
-				MemoryStream stream = new MemoryStream();
-				byte[] bytes = Convert.FromBase64String(item.GetString() ?? throw new Exception("item.GetString() is null"));
-				stream.Write(bytes, 0, bytes.Length);
-
-				imagesList.Add(stream);
-			}
-			return imagesList;
+			return images.EnumerateArray()
+				.Select(item => Convert.FromBase64String(
+					item.GetString() ?? throw new NullReferenceException("item.GetString() is null"))
+				)
+				.Select(bytes => {
+					MemoryStream stream = new();
+					stream.Write(bytes, 0, bytes.Length);
+					return stream;
+				});
 		}
 	}
 
-	public async Task<MemoryStream?> GetProgress() {
-		string url = "http://127.0.0.1:7860/sdapi/v1/progress";
+	public async Task<Progress> GetProgress() {
+		using HttpClient client = new HttpClient();
+		HttpResponseMessage response = await client.GetAsync(url + "progress");
 
-		using (HttpClient client = new HttpClient()) {
-			HttpResponseMessage response = await client.GetAsync(url);
+		if (!response.IsSuccessStatusCode)
+			throw new Exception("Response with not success status code");
 
-			if (!response.IsSuccessStatusCode)
-				return null;
+		string responseContent = await response.Content.ReadAsStringAsync();
 
-			string responseContent = await response.Content.ReadAsStringAsync();
+		JsonElement json = JsonSerializer.Deserialize<JsonElement>(responseContent);
+		JsonElement image = json.GetProperty("current_image");
+		State state = GetStateFromStateJsonElement(json.GetProperty("state"));
 
-			JsonElement image = System.Text.Json.JsonSerializer.Deserialize<JsonElement>(responseContent)
-				.GetProperty("current_image");
+		string imageInBase64 = image.GetString() ?? string.Empty;
+		MemoryStream? stream = (imageInBase64 != string.Empty) ? new MemoryStream(Convert.FromBase64String(imageInBase64)) : null;
 
-			string result = image.GetString() ?? "null";
+		return new Progress(state, stream);
+	}
 
-			if (result == "null")
-				return null;
-
-			return new MemoryStream(Convert.FromBase64String(result));
+	private async Task<string> GetJsonFromHttpWebResponseAsync(HttpWebResponse response) {
+		using (Stream responseStream = response.GetResponseStream())
+		using (StreamReader reader = new StreamReader(responseStream)) {
+			return await reader.ReadToEndAsync();
 		}
+	}
+
+	private State GetStateFromStateJsonElement(JsonElement state) {
+		return new State(
+			state.GetProperty("skipped").GetBoolean(),
+			state.GetProperty("interrupted").GetBoolean(),
+			state.GetProperty("sampling_step").GetInt32(),
+			state.GetProperty("sampling_steps").GetInt32()
+		);
 	}
 }

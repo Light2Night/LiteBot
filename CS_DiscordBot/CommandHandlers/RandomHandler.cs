@@ -1,7 +1,7 @@
-﻿namespace DiscordBot.CommandHandlers;
+﻿namespace LiteBot.CommandHandlers;
 
-using DiscordBot.CommandHandlersBase;
-using DiscordBot.Exceptions;
+using LiteBot.CommandHandlersBase;
+using LiteBot.Exceptions;
 
 public class RandomHandler : CommandHandler {
 	protected Random random = new Random(DateTime.Now.Millisecond);
