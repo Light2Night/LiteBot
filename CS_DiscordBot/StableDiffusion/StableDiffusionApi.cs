@@ -8,7 +8,7 @@ public class StableDiffusionApi {
 	private string url = "http://127.0.0.1:7860/sdapi/v1/";
 	public StableDiffusionApi() { }
 
-	public async Task<IEnumerable<MemoryStream>> GenerateImages(string postData) {
+	public async Task<IEnumerable<MemoryStream>> GenerateImagesAsync(string postData) {
 		HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url + "txt2img");
 		request.Timeout = 1_200_000; // Timeout.Infinite
 		request.Method = "POST";
@@ -37,7 +37,7 @@ public class StableDiffusionApi {
 		}
 	}
 
-	public async Task<Progress> GetProgress() {
+	public async Task<Progress> GetProgressAsync() {
 		using HttpClient client = new HttpClient();
 		HttpResponseMessage response = await client.GetAsync(url + "progress");
 

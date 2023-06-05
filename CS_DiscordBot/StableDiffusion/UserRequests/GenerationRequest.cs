@@ -5,10 +5,12 @@ using Discord.Rest;
 namespace LiteBot.StableDiffusion.UserRequests;
 
 public class GenerationRequest : UserRequest {
-	protected ApiWithProperties apiWithProperties;
+	protected StableDiffusionApi api;
+	protected PropertyAccessor propertyAccessor;
 
 	public GenerationRequest(SocketMessage socketMessage, ApiWithProperties apiWithProperties) : base(socketMessage) {
-		this.apiWithProperties = apiWithProperties;
+		api = apiWithProperties.StableDiffusionApi;
+		propertyAccessor = apiWithProperties.PropertyAccessor;
 	}
 
 	public override void Exucute() {
@@ -16,23 +18,43 @@ public class GenerationRequest : UserRequest {
 		RestUserMessage restUserMessage = SendMessage("Generation started...", messageReference: messageReference);
 
 		try {
-			GenerateImageAsync(restUserMessage).Wait();
+			GenerateAndShowImageAsync(restUserMessage).Wait();
 		}
 		catch (Exception ex) {
 			restUserMessage.ModifyAsync(m => m.Content = $"Unexpected exception: {ex}");
 		}
 	}
 
-	private async Task GenerateImageAsync(RestUserMessage restUserMessage) {
-		StableDiffusionApi api = apiWithProperties.StableDiffusionApi;
-		string properties = apiWithProperties.PropertyAccessor.GetProperies(socketMessage.Author.Id);
+	private async Task GenerateAndShowImageAsync(RestUserMessage restUserMessage) {
+		string properties = propertyAccessor.GetProperies(socketMessage.Author.Id);
 
-		Task<IEnumerable<MemoryStream>> imagesGenerationTask = api.GenerateImages(properties);
+		var imagesGenerationTask = api.GenerateImagesAsync(properties);
 
+		var cts = new CancellationTokenSource();
+		var previewTask = ShowPreviewImagesWhileNotCompletedAsync(cts.Token, imagesGenerationTask, restUserMessage);
+
+		IEnumerable<MemoryStream> imagesList = await imagesGenerationTask;
+
+		cts.Cancel();
+		try {
+			await previewTask;
+		}
+		catch (TaskCanceledException) { }
+
+		await restUserMessage.ModifyAsync(m => {
+			m.Content = "";
+			m.Attachments = ImagesToAttachments(imagesList).ToList();
+			//m.Components = CreateComponentBuilder().Build();
+		});
+
+		imagesList.ToList().ForEach(image => image.Dispose());
+	}
+
+	protected async Task ShowPreviewImagesWhileNotCompletedAsync(CancellationToken token, Task<IEnumerable<MemoryStream>> imagesGenerationTask, RestUserMessage restUserMessage) {
 		while (!imagesGenerationTask.IsCompleted) {
-			await Task.Delay(5000);
-			//try {
-			Progress progress = await api.GetProgress();
+			await Task.Delay(5000, token);
+
+			Progress progress = await api.GetProgressAsync();
 			using MemoryStream? image = progress.Image;
 			if (image == null)
 				continue;
@@ -41,18 +63,7 @@ public class GenerationRequest : UserRequest {
 				m.Content = $"Progress: {progress.State.SamplingStep}/{progress.State.SamplingSteps}";
 				m.Attachments = new List<FileAttachment> { new FileAttachment(image, "image.png") };
 			});
-			//}
-			//catch (Exception) { }
 		}
-
-		IEnumerable<MemoryStream> imagesList = await imagesGenerationTask;
-		await restUserMessage.ModifyAsync(m => {
-			m.Content = "";
-			m.Attachments = ImagesToAttachments(imagesList).ToList();
-			//m.Components = CreateComponentBuilder().Build();
-		});
-
-		imagesList.ToList().ForEach(image => image.Dispose());
 	}
 
 	protected IEnumerable<FileAttachment> ImagesToAttachments(IEnumerable<MemoryStream> images) {
